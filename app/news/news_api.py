@@ -23,7 +23,7 @@ def get_all_articles_from_db(from_date:str) -> list[dict]:
         db.close()
 
 
-def get_news_articles(query:str, from_date:str, to_date:str) -> None:
+def get_news_articles(query:str, from_date:str, to_date:str) -> list[dict]:
 
     if not test_db_has_items():
         logger.info(f"The database is empty. Adding all articles to the database.")

@@ -1,4 +1,4 @@
-from app.db.session import SessionLocal
+from app.db.session import get_db
 from app.models.db_schema import NewsArticles
 from app.services.logger import agent_logger as logger
 
@@ -15,15 +15,16 @@ def add_to_db(article: dict) -> None:
     )
 
     # Initialize the database session
-    db = SessionLocal()
+    db =get_db()
     try:
         # Add the article to the database
         logger.info(f"Adding article to the database: {article_db}")
         db.add(article_db)
         db.commit()
-    finally:
-        logger.info(f"Closing the database session")
-        db.close()
+    except Exception as e:
+        logger.error(f"DB Error adding article to the database: {e}")
+        db.rollback()
+        raise e
 
    
 

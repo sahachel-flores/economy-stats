@@ -2,9 +2,9 @@
 
 from newspaper import Article
 from app.services.logger import api_logger as logger
-from app.db.session import SessionLocal
+from app.db.session import get_db
 from app.models.db_schema import NewsArticles
-
+from sqlalchemy import text
 
 
 def get_article_text(url: str) -> str:
@@ -26,18 +26,21 @@ def get_article_summary(url: str) -> str:
 def get_articles_from_ids(ids: list[str]) -> list[dict]:
    
     try:
-        db = SessionLocal()
+        db = get_db()
         articles = []
         logger.info(f"The ids are: {ids}")
         for id in ids:
             try:
                 logger.info(f"The id is: {id}")
-                article = db.query(NewsArticles).filter(NewsArticles.id == id).first()
-                logger.info(f"The article is: \n{article}")
+                #article = db.query(NewsArticles).filter(NewsArticles.id == id).first()
+                article = db.execute(text(f"SELECT * FROM news_articles where id == '{id}'")).fetchall()
+                article = article[0]._asdict()
+                #logger.info(f"The article is: \n{article}")
             except Exception as e:
                 logger.error(f"Error getting article {id}: {e}")
                 continue
-            articles.append(article._asdict())
+            articles.append(article)
         return articles
-    finally:
-        db.close()
+    except Exception as e:
+        logger.error(f"DB Error getting articles from ids: {e}")
+        return []
