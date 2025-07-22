@@ -49,3 +49,6 @@ yarn-error.log
 *.bak
 *.old
 *~
+
+# log files
+app/logs/
