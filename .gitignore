@@ -51,4 +51,7 @@ yarn-error.log
 *~
 
 # log files
-logs/
+app/logs/
+
+# archive code
+app/archived_code/logs
