@@ -60,3 +60,4 @@ app/archived_code/logs
 logs/
 *.log
 *.log.*
+
