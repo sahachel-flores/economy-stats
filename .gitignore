@@ -50,4 +50,13 @@ yarn-error.log
 *.old
 *~
 
+# log files
+app/logs/
 
+# archive code
+app/archived_code/logs
+
+# ignore log
+logs
+*.log
+*.log.*
