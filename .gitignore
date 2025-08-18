@@ -57,6 +57,6 @@ app/logs/
 app/archived_code/logs
 
 # ignore log
-logs
+logs/
 *.log
 *.log.*
