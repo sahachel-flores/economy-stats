@@ -61,3 +61,11 @@ logs/
 *.log
 *.log.*
 
+.env
+.env*
+logs/
+*.log
+node_modules/
+dist/
+.venv/
+__pycache__/
