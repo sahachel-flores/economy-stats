@@ -1,0 +1,8 @@
+pydantic
+python-dotenv
+openai
+sqlalchemy
+newsapi-python
+newspaper3k
+requests
+beautifulsoup4

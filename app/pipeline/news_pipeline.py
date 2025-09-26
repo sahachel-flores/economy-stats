@@ -1,6 +1,6 @@
-# app/pipeline/news_pipeline.py
-from app.agents.selector_agent import select_articles
+# run: python3 app/pipeline/news_pipeline.py
 from app.models.agent_context_schema import AgentContext
+from app.agents.selector_agent import select_articles
 from app.services.logger import agent_logger as logger
 from app.news.news_api import get_news_articles
 from app.db.init_db import init_db

@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from app.services.logger import agent_logger as logger
 
 SQLALCHEMY_DATABASE_URL = 'sqlite:///./newsarticles.db'
-POSTGRES_DATABASE_URL = 'postgresql://postgres:postgres@localhost/TodoApplicationDatabase'
+#POSTGRES_DATABASE_URL = 'postgresql://postgres:postgres@localhost/TodoApplicationDatabase'
 
 
 # Creating our enginer, need database path, connect_args allows to define some kind of connection to a database

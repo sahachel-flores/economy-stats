@@ -32,12 +32,12 @@ def get_articles_from_ids(ids: list[str]) -> list[dict]:
         for id in ids:
             try:
                 logger.info(f"The id is: {id}")
-                #article = db.query(NewsArticles).filter(NewsArticles.id == id).first()
+                #article = db.query(NewsArticles).filter(NewsArticles.id == id).all()
                 article = db.execute(text(f"SELECT * FROM news_articles where id == '{id}'")).fetchall()
                 article = article[0]._asdict()
                 #logger.info(f"The article is: \n{article}")
             except Exception as e:
-                logger.error(f"Error getting article {id}: {e}")
+                logger.error(f"Database Error getting article {id}: {e}")
                 continue
             articles.append(article)
         return articles
