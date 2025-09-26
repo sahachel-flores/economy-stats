@@ -53,12 +53,21 @@ yarn-error.log
 # log files
 app/logs/
 
-# archive code
-app/archived_code/logs
 
 # ignore log
 logs/
 *.log
 *.log.*
 
-econ_news_pipeline/
+# workspace
+*.code-workspace
+
+# database
+*.db
+
+# virtual environment
+economy-env/
+economy-stats.egg-info/
+
+#archive code
+archived_code/

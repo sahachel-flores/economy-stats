@@ -35,7 +35,7 @@ def get_articles_from_ids(ids: list[str]) -> list[dict]:
                 #article = db.query(NewsArticles).filter(NewsArticles.id == id).all()
                 article = db.execute(text(f"SELECT * FROM news_articles where id == '{id}'")).fetchall()
                 article = article[0]._asdict()
-                #logger.info(f"The article is: \n{article}")
+                logger.info(f"The article is: \n{article}")
             except Exception as e:
                 logger.error(f"Database Error getting article {id}: {e}")
                 continue
