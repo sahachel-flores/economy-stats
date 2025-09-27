@@ -12,13 +12,19 @@ load_dotenv()
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 
 def get_all_articles_from_db(from_date:str) -> list[dict]:
+    """
+    This function gets all articles from the database.
+    """
+    db = SessionLocal()
     try:
-        db = SessionLocal()
         return_articles = []
         articles = db.execute(text(f"SELECT * FROM news_articles where published_at >= '{from_date}'")).fetchall()
         for a in articles:
             return_articles.append(a._asdict())
         return return_articles
+    except Exception as e:
+        logger.error(f"Error getting articles from db: {e}")
+        return []
     finally:
         db.close()
 
