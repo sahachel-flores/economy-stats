@@ -2,7 +2,7 @@
 from app.models.agent_context_schema import AgentContext
 from app.agents.selector_agent import select_articles
 from app.services.logger import agent_logger as logger
-from app.news.news_api import get_news_articles
+from app.news.news_api import get_news_articles_from_news_api
 from app.db.init_db import init_db
 from app.agents.editor_agent import verified_articles
 
@@ -25,7 +25,7 @@ def run_news_pipeline() -> None:
     context.topic = topic
 
     # Obtaining articles from the news api
-    articles = get_news_articles(query=topic, from_date="2025-06-17", to_date="2025-06-17")
+    articles = get_news_articles_from_news_api(query=topic, from_date="2025-06-17", to_date="2025-06-17")
     logger.info(f"Number of articles: {len(articles)}\n\n")
 
     # Adding articles to the context

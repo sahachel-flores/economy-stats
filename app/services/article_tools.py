@@ -43,7 +43,7 @@ def get_article_summary(url: str) -> str:
         logger.error(f"Error parsing url {url}: {e}")
         return None
 
-def get_articles_from_ids(ids: list[str]) -> list[dict]:
+def get_articles_from_ids(ids: list[int]) -> list[dict]:
     """
     This function gets the article from the database using the ids. It returns a list of dictionaries.
     """

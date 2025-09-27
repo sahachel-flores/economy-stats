@@ -7,7 +7,7 @@ SQLALCHEMY_DATABASE_URL = 'sqlite:///./newsarticles.db'
 #POSTGRES_DATABASE_URL = 'postgresql://postgres:postgres@localhost/TodoApplicationDatabase'
 
 
-# Creating our enginer, need database path, connect_args allows to define some kind of connection to a database
+# Creating our enginer, needs database path, connect_args allows to define some kind of connection to a database.
 # We have false for check_same_thread to prevent accident sharing of the same connection
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={'check_same_thread': False})
 
@@ -17,11 +17,10 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Creating database object we can interact with
 Base = declarative_base()
 
+# FastAPI dependency to get the database session. Do not use this function directly if you are not using FastAPI, use SessionLocal instead.
 def get_db():
     db = SessionLocal()
     try:
-        db.commit()
-    except:
-        db.rollback()
+        yield db
     finally:
         db.close()

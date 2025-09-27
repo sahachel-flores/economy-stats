@@ -2,7 +2,7 @@ from app.db.session import SessionLocal
 from app.models.db_schema import NewsArticles
 from app.services.logger import agent_logger as logger
 
-def add_to_db(article: dict) -> None:
+def add_to_db(article: dict) -> bool:
     """
     This function adds an article to the database.
     """
