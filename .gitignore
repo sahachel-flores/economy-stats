@@ -72,3 +72,5 @@ dist/
 build/
 *.egg-info/
 .mypy_cache/
+
+setup.py
