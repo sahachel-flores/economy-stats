@@ -1,5 +1,4 @@
 # app/services/openai_client.py
-import os      
 from dotenv import load_dotenv
 from app.services.logger import agent_logger as logger
 from openai import OpenAI

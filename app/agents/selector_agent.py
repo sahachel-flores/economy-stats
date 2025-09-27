@@ -2,7 +2,7 @@
 from app.services.logger import api_logger as logger
 from app.services.openai_client import ask_openai
 from app.models.agent_context_schema import AgentContext
-from app.services.article_tools import get_articles_from_ids
+from app.services.db_tools import get_articles_using_ids_from_db
 import ast
 
 def select_articles(candidate_articles: list[dict], context: AgentContext) -> None:
@@ -75,7 +75,7 @@ def select_articles(candidate_articles: list[dict], context: AgentContext) -> No
     # Storing the ids of the selected articles by the selector agent
     context.selected_articles_ids = result
     # Calling helper function to get the content of the selected articles
-    context.selected_articles_content = get_articles_from_ids(result)
+    context.selected_articles_content = get_articles_using_ids_from_db(result)
     logger.info(f"The number of selected articles are: {len(context.selected_articles_ids)}\n")
  
     

@@ -7,41 +7,6 @@ from app.models.db_schema import NewsArticles
 from sqlalchemy import text
 
 
-def get_article_text(url: str) -> str:
-    """
-    This function gets the text of the article from the url.
-    """
-    try:
-        # Initialize the article object
-        article = Article(url)
-
-        # Download and parse the article
-        article.download()
-        article.parse()
-
-        # Return the text of the article
-        return article.text
-    except Exception as e:
-        logger.error(f"Error parsing article {url}: {e}")
-        return None
-
-def get_article_summary(url: str) -> str:
-    """
-    This function gets the summary of the article from the url.
-    """
-    try:
-        # Initialize the article object
-        article = Article(url)
-
-        # Download and parse the article
-        article.download()
-        article.parse()
-
-        # Return the summary of the article
-        return article.summary
-    except Exception as e:
-        logger.error(f"Error parsing url {url}: {e}")
-        return None
 
 def get_articles_from_ids(ids: list[int]) -> list[dict]:
     """

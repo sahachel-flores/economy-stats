@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from app.services.logger import agent_logger as logger
+from app.services.logger import api_logger as logger
 
 SQLALCHEMY_DATABASE_URL = 'sqlite:///./newsarticles.db'
 #POSTGRES_DATABASE_URL = 'postgresql://postgres:postgres@localhost/TodoApplicationDatabase'

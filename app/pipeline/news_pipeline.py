@@ -2,7 +2,7 @@
 from app.models.agent_context_schema import AgentContext
 from app.agents.selector_agent import select_articles
 from app.services.logger import agent_logger as logger
-from app.news.news_api import get_news_articles_from_news_api
+from app.services.news_api_tools import get_news_articles_from_news_api
 from app.db.init_db import init_db
 from app.agents.editor_agent import verified_articles
 
