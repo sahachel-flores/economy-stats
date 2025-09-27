@@ -3,36 +3,65 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 
 
+
+class PipelineControl(BaseModel):
+    """
+    Read-only configuration data that agents use for coordination
+    """
+    attempt: int = Field(default=1, description="Current pipeline attempt")
+    max_attempts: int = Field(default=2, description="Maximum retry attempts")
+    topic: str = Field(default="US Economy", description="News topic to focus on")
+    target_articles: int = Field(default=5, description="Target number of approved articles")
+    from_date: str = Field(default="2025-06-17", description="Article date range start")
+    to_date: str = Field(default="2025-06-17", description="Article date range end")
+
+class ArticleFlow(BaseModel):
+    """
+    Articles at different stages of the pipeline
+    """
+
+    raw_articles: List[dict] = Field(default_factory=list, description="Original articles from News API")
+    selected_articles_ids: List[int] = Field(default_factory=list, description="IDs selected by selector agent")
+    selected_articles_content: List[dict] = Field(default_factory=list, description="Full content of selected articles")
+    approved_articles_ids: List[int] = Field(default_factory=list, description="IDs approved by editor agent")
+    rejected_articles_ids: List[int] = Field(default_factory=list, description="IDs rejected by editor agent")
+    approved_articles_content: List[dict] = Field(default_factory=list, description="Full content of approved articles")
+
+class SelectorState(BaseModel):
+    history: List[dict] = Field(default_factory=list, description="OpenAI conversation history")
+    execution_count: int = Field(default=0, description="Number of times executed")
+    last_response: Optional[str] = Field(default=None, description="Last raw OpenAI response")
+
+class EditorState(BaseModel):
+    history: List[dict] = Field(default_factory=list, description="OpenAI conversation history") 
+    execution_count: int = Field(default=0, description="Number of times executed")
+    last_response: Optional[str] = Field(default=None, description="Last raw OpenAI response")
+
+class AgentStates(BaseModel):
+    """
+    Internal state for each agent - don't cross-contaminate
+    """
+    selector: SelectorState = Field(default_factory=lambda: SelectorState())
+    editor: EditorState = Field(default_factory=lambda: EditorState())
+    # Future agents will add their state here
+
+
+class PipelineResults(BaseModel):
+    """Final results and performance metrics"""
+    success: bool = Field(default=False, description="Whether pipeline achieved target")
+    total_execution_time: float = Field(default=0.0, description="Total time in seconds")
+    articles_processed: int = Field(default=0, description="Total articles analyzed")
+    final_approved_count: int = Field(default=0, description="Final number of approved articles")
+    
+    # Performance tracking
+    agent_performance: Dict[str, dict] = Field(default_factory=dict, description="Per-agent metrics")
+    
 class AgentContext(BaseModel):
     """
     This class is used to keep track of state and history of the agents.
     """
-    
-    # Control and loop tracking
-    attempt: int = Field(default=1, description="Current attempt number")
-    max_attempts: int = Field(default=5, description="Maximum allowed retry attempts")
-    
-    # Topic tracking
-    topic: str = Field(default="US Economy", description="The topic of the news articles")
-
-    # Articles selection
-    articles: List[dict] = Field(default_factory=list, description="List of articles returned by the news api")
-    
-    # Article tracking
-    selected_articles_ids: List[int] = Field(default_factory=list, description="Ids of selected articles by selector agent")
-    selected_articles_content: List[dict] = Field(default_factory=list, description="Content of selected articles by selector agent")
-    rejected_articles_ids: List[int] = Field(default_factory=list, description="Ids of Articles that were rejected by verifier")
-    approved_articles_ids: List[int] = Field(default_factory=list, description="Ids of Articles approved by reviewer")
-    approved_articles_content: List[dict] = Field(default_factory=list, description="Content of Articles approved by reviewer")
-
-    # Raw responses (useful for debugging)
-    #last_selector_response: Optional[str] = Field(default=None)
-    #last_verifier_response: Optional[str] = Field(default=None)
-
-    # history
-    selector_history: List[dict] = Field(default_factory=list, description="History of selector agent")
-    editor_history: List[dict] = Field(default_factory=list, description="History of verifier agent")
-
-    # Full audit trail
-    all_attempts_history: List[Dict[str, List[dict]]] = Field(default_factory=list, description="Tracks all attempts with article selections and feedback")
+    control: PipelineControl = Field(default_factory=PipelineControl)
+    article_flow: ArticleFlow = Field(default_factory=ArticleFlow)
+    agent_states: AgentStates = Field(default_factory=AgentStates)
+    results: PipelineResults = Field(default_factory=PipelineResults)
 
