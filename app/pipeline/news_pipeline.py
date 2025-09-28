@@ -5,6 +5,8 @@ from app.services.logger import agent_logger as logger
 from app.services.news_api_tools import get_news_articles_from_news_api
 from app.db.init_db import init_db
 from app.agents.editor_agent import verified_articles
+from app.agents.selector_agent_class import SelectorAgent
+import asyncio
 
 def run_news_pipeline() -> None:
     """
@@ -13,32 +15,28 @@ def run_news_pipeline() -> None:
     - Selects the top 5 relevant ones using agent
     """
     logger.info("Running news pipeline...")
-
-    # Initialize the database
-    init_db()
-
-    # 1. Initialize agent context
+    # initializing the agent context
     context = AgentContext()
-
-    # 2. Get articles
-    topic = "US Economy"
-    context.topic = topic
-
-    # Obtaining articles from the news api
-    articles = get_news_articles_from_news_api(query=topic, from_date="2025-06-17", to_date="2025-06-17")
-    logger.info(f"Number of articles: {len(articles)}\n\n")
-
-    # Adding articles to the context
-    context.articles = articles
-
-    # Running the pipeline until we have 5 approved articles
-    while context.attempt <= 2 and len(context.approved_articles_ids) < 5:
+    selector_agent = SelectorAgent(name="Selector Agent")
+    context.control.topic = "US Economy"
+    context.control.from_date = "2025-06-17"
+    context.control.to_date = "2025-06-17"
+    
+    while context.should_continue():
+        articles = get_news_articles_from_news_api(query=context.control.topic, from_date=context.control.from_date, to_date=context.control.to_date)
+        context.article_flow.raw_articles.extend(articles)
+        logger.info(f"Number of articles: {len(articles)}\n\n")
+        
+        # Running the selector agent
+        selector_agent.execute(context)
+        logger.info(f"Number of selected articles: {len(context.article_flow.selected_articles_ids)}\n\n")
+        return 
         # 3. Run article selector agent
-        select_articles(articles, context=context)
+        #select_articles(articles, context=context)
 
         # 4. Run verifier agent
-        verified_articles(context)
-        context.attempt += 1
+        #verified_articles(context)
+        #context.attempt += 1
         
 
     # logger.info(f"We are out of attempts. Selected {len(context.selected_articles)} articles.")

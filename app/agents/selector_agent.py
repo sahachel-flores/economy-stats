@@ -5,18 +5,17 @@ from app.models.agent_context_schema import AgentContext
 from app.services.db_tools import get_articles_using_ids_from_db
 import ast
 
-def select_articles(candidate_articles: list[dict], context: AgentContext) -> None:
+def select_articles(context: AgentContext) -> None:
     logger.info("---------------------------------Entering select_articles function---------------------------------")
-    logger.info(f"------Attempt {context.attempt}: Selecting from {len(candidate_articles)} candidates.------")
+    logger.info(f"------Attempt {context.control.attempt}: Selecting from {len(context.article_flow.raw_articles)} candidates.------")
         
 
     
-    if context.attempt == 1:
+    if context.control.attempt == 1:
         logger.info("-------------First attempt-------------")
         instruction = f"""
-        You are an expert news analyst assistant. Your task is to select the five most relevant articles for a news website 
-        specializing in the U.S. economy.
-        You will be given a list of objects which contains information about the news article, the structure of the object is:
+        You are an expert news analyst. Select the {context.control.target_articles} most relevant articles about {context.control.topic}.
+        You will be given a list of objects which contains information about the news articles in the following structure:
         {{
             "id": The id of the article,
             "author": The author of the article,
@@ -28,15 +27,19 @@ def select_articles(candidate_articles: list[dict], context: AgentContext) -> No
             "content": The content of the article.
         }}
         
-        Instructions:
-        1. You will loop through the list of objects and analyze the content field of each article.
-        2. After completing your analyzing of each article, you will select the five most relevant articles.
-        3. An article can be selected only once.
-        4. If one or more fields are empty, do not select the article.
-        5. Return only a python list containing the ids of the five selected articles. Do not add any other text.
+        Read the following instructions carefully before selecting the articles:
 
-        Here are the list of news article:\n
-        {candidate_articles}
+        Instructions:
+        1. Analyze the title and content of each article
+        2. Skip articles with missing content fields.
+        3. Select the {context.control.target_articles} most relevant articles.
+        4. If fewer than {context.control.target_articles} qualify, select as many as possible
+        5. Return ONLY a Python list of article IDs - no explanations, no other text
+        6. Example output: [1, 2, 3, 4, 5]
+        
+
+        List of news articles:\n
+        {context.article_flow.raw_articles}
         """
 
         message = {"role": "system", "content": instruction}
@@ -44,11 +47,12 @@ def select_articles(candidate_articles: list[dict], context: AgentContext) -> No
 
     else:
         instruction = f"""
-        The editor agent has rejected the following articles with ids: {context.rejected_articles_ids}. 
-        You will reselect {len(context.rejected_articles_ids)} news articles based on the feedback provided by the editor agent.
+        The editor agent has rejected {len(context.article_flow.rejected_articles_ids)} articles. 
+        The following articles with ids: {context.article_flow.rejected_articles_ids} were rejected. 
+        You will reselect {len(context.article_flow.rejected_articles_ids)} news articles.
     
         Instructions:
-        1. Go back to the list of candidate articles and review the content of each article. 
+        1. Revisit the list of candidate articles and review the content of each article. 
         2. Use the editor's feedback to reselect news articles.
         3. Do not select articles that were rejected or that were already approved. 
         4. The number of selected articles must be the same as the number of rejected articles.
@@ -63,19 +67,23 @@ def select_articles(candidate_articles: list[dict], context: AgentContext) -> No
         message = {"role": "system", "content": instruction}
         
 
-    
-    context.selector_history.append(message)
+    context.agent_states.selector.history.append(message)
+    # Appending system and agent messages to the history
+    result = ask_openai(context.agent_states.selector.history)
+    context.agent_states.selector.last_response = result
+    context.agent_states.selector.history.append({'role': 'assistant', 'content': result})
 
     
-    # Appending selected articles to context
-    result = ask_openai(context.selector_history, context)
     logger.info(f"Selector agent: The response is: {result}")
+
+    # TODO: Verify the response is what we expect
     # TODO: Create a function to convert the response to a list of ids
+
     result = ast.literal_eval(result)
     # Storing the ids of the selected articles by the selector agent
-    context.selected_articles_ids = result
+    context.article_flow.selected_articles_ids = result
     # Calling helper function to get the content of the selected articles
-    context.selected_articles_content = get_articles_using_ids_from_db(result)
-    logger.info(f"The number of selected articles are: {len(context.selected_articles_ids)}\n")
+    context.article_flow.selected_articles_content = get_articles_using_ids_from_db(result)
+    logger.info(f"The number of selected articles are: {len(context.article_flow.selected_articles_ids)}\n")
  
     

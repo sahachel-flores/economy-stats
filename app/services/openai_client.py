@@ -9,13 +9,12 @@ MODEL = 'gpt-4o-mini'
 
 
 
-def ask_openai(messages: list[dict], context: AgentContext, model: str = MODEL, temperature: float = 0.3) -> None:
+def ask_openai(messages: list, model: str = MODEL, temperature: float = 0.3) -> None:
     """
     Sends a prompt to OpenAI and returns the model's response as plain text.
     """
     logger.info(f"---------------------------------Entering ask_openai---------------------------------")
     openai = OpenAI()
-
     try:
         logger.info(f"\t\t-----------Sending request to OpenAI-----------")
         # Send the request to OpenAI

@@ -19,7 +19,6 @@ class ArticleFlow(BaseModel):
     """
     Articles at different stages of the pipeline
     """
-
     raw_articles: List[dict] = Field(default_factory=list, description="Original articles from News API")
     selected_articles_ids: List[int] = Field(default_factory=list, description="IDs selected by selector agent")
     selected_articles_content: List[dict] = Field(default_factory=list, description="Full content of selected articles")
@@ -43,6 +42,7 @@ class AgentStates(BaseModel):
     """
     selector: SelectorState = Field(default_factory=lambda: SelectorState())
     editor: EditorState = Field(default_factory=lambda: EditorState())
+    history: List[dict] = Field(default_factory=list, description="OpenAI conversation history")
     # Future agents will add their state here
 
 
@@ -65,3 +65,8 @@ class AgentContext(BaseModel):
     agent_states: AgentStates = Field(default_factory=AgentStates)
     results: PipelineResults = Field(default_factory=PipelineResults)
 
+    def should_continue(self) -> bool:
+        """
+        Check if the pipeline should continue.
+        """
+        return self.control.attempt <= self.control.max_attempts and len(self.article_flow.approved_articles_ids) < self.control.target_articles
