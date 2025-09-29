@@ -6,6 +6,7 @@ from app.services.news_api_tools import get_news_articles_from_news_api
 from app.db.init_db import init_db
 from app.agents.editor_agent import verified_articles
 from app.agents.selector_agent_class import SelectorAgent
+from app.agents.editor_agent_class import EditorAgent
 import asyncio
 
 def run_news_pipeline() -> None:
@@ -17,24 +18,35 @@ def run_news_pipeline() -> None:
     logger.info("Running news pipeline...")
     # initializing the agent context
     context = AgentContext()
+    # initializing the agents
     selector_agent = SelectorAgent(name="Selector Agent")
+    editor_agent = EditorAgent(name="Editor Agent")
+    # setting the control parameters
     context.control.topic = "US Economy"
     context.control.from_date = "2025-06-17"
     context.control.to_date = "2025-06-17"
     
+    # running the pipeline
     while context.should_continue():
+        # scraping the articles
         articles = get_news_articles_from_news_api(query=context.control.topic, from_date=context.control.from_date, to_date=context.control.to_date)
         context.article_flow.raw_articles.extend(articles)
         logger.info(f"Number of articles: {len(articles)}\n\n")
         
         # Running the selector agent
         selector_agent.execute(context)
-        logger.info(f"Number of selected articles: {len(context.article_flow.selected_articles_ids)}\n\n")
-        return 
-        # 3. Run article selector agent
-        #select_articles(articles, context=context)
-
-        # 4. Run verifier agent
+        
+        # Run editor agent
+        if editor_agent.execute(context):
+            logger.info("Editor agent executed successfully")
+            return
+        else:
+            logger.error("Editor agent failed to execute")
+            context.attempt += 1
+            continue
+        return
+        
+        # Run verifier agent
         #verified_articles(context)
         #context.attempt += 1
         

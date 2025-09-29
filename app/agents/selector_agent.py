@@ -4,7 +4,7 @@ from app.services.openai_client import ask_openai
 from app.models.agent_context_schema import AgentContext
 from app.services.db_tools import get_articles_using_ids_from_db
 import ast
-
+import re
 def select_articles(context: AgentContext) -> None:
     logger.info("---------------------------------Entering select_articles function---------------------------------")
     logger.info(f"------Attempt {context.control.attempt}: Selecting from {len(context.article_flow.raw_articles)} candidates.------")
@@ -79,11 +79,55 @@ def select_articles(context: AgentContext) -> None:
     # TODO: Verify the response is what we expect
     # TODO: Create a function to convert the response to a list of ids
 
-    result = ast.literal_eval(result)
+    #result = ast.literal_eval(result)
     # Storing the ids of the selected articles by the selector agent
-    context.article_flow.selected_articles_ids = result
+    #context.article_flow.selected_articles_ids = result
     # Calling helper function to get the content of the selected articles
-    context.article_flow.selected_articles_content = get_articles_using_ids_from_db(result)
-    logger.info(f"The number of selected articles are: {len(context.article_flow.selected_articles_ids)}\n")
+    #context.article_flow.selected_articles_content = get_articles_using_ids_from_db(result)
+    #logger.info(f"The number of selected articles are: {len(context.article_flow.selected_articles_ids)}\n")
  
-    
+def parse_response(response: str) -> list:
+    """
+    Parse the response from the selector agent and return a list of ids.
+    """
+    try:
+        # method1 parse the response as a list
+        list_pattern = r'\[[\d,\s]*\]'
+        match = re.search(list_pattern, response)
+        if match:
+            try:
+                parsed = ast.literal_eval(match.group())
+                if isinstance(parsed, list) and all(isinstance(item, int) for item in parsed):
+                    logger.info(f"Parsed list: {parsed} successfully")
+                    return parsed
+            except Exception as e:
+                logger.error(f"Error parsing response with method1: {e}")
+                
+        # method2 parse the response as a list of numbers
+        numbers = re.findall(r'\d+', response)
+        if numbers:
+            result = [int(x) for x in numbers]
+            logger.info(f"Parsed list: {result} successfully")
+            return result
+        else:
+            logger.error("Error parsing response with method2")
+        
+        # method3 Look for comma-separated numbers
+        comma_pattern = r'(\d+(?:\s*,\s*\d+)*)'
+        comma_matches = re.findall(comma_pattern, response)
+        for match in comma_matches:
+            try:
+                numbers = [int(x.strip()) for x in match.split(',')]
+                if len(numbers) > 0:
+                    logger.info(f"Parsed list: {numbers} successfully")
+                    return numbers
+            except Exception as e:
+                logger.error(f"Error parsing response with method3: {e}")
+                continue
+
+        logger.error("Error parsing response with all methods")
+        return []
+  
+    except Exception as e:
+        logger.error(f"Unexpected Error occured while parsing response: {e}")
+        return []

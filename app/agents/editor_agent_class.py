@@ -1,0 +1,81 @@
+from app.agents.base_agent import BaseAgent
+from app.models.agent_context_schema import AgentContext
+from app.services.openai_client import ask_openai
+from app.services.logger import agent_logger as logger
+from app.services.db_tools import get_articles_using_ids_from_db
+
+class EditorAgent(BaseAgent):
+    """
+    Agent responsible for editing the articles.
+    """
+    def __init__(self, name: str, max_retries: int = 2):
+        super().__init__(name, max_retries)
+    
+    def execute(self, context: AgentContext, *args, **kwargs) -> bool:
+        """
+        Agent for editing the articles.
+        """
+        try:
+            # Generate input message
+            instruction = self.generate_input_message(context)
+            message = {"role": "system", "content": instruction}
+            context.agent_states.editor.history.append(message)
+            result = ask_openai(context.agent_states.editor.history)
+            parsed_result = self.parse_response(result, context)
+            if parsed_result:
+                if len(parsed_result) == context.control.target_articles:
+                    context.agent_states.editor.last_response = result
+                    context.agent_states.editor.history.append({'role': 'assistant', 'content': result})
+                    context.article_flow.approved_articles_ids = parsed_result
+                    context.article_flow.approved_articles_content = get_articles_using_ids_from_db(parsed_result)
+                    return True
+                else:
+                    context.article_flow.rejected_articles_ids = [article for article in context.article_flow.selected_articles_ids if article not in parsed_result]
+                    context.article_flow.rejected_articles_content = get_articles_using_ids_from_db(context.article_flow.rejected_articles_ids)
+                    return False
+            else:
+                logger.error(f"Error: parse_response() function failed to parse the response: {result}")
+                return False
+        
+
+        except Exception as e:
+            logger.error(f"An error occured while executing the editor agent: {e}")
+            return False
+        
+        return True
+    
+    def generate_input_message(self, context: AgentContext, *args, **kwargs) -> str:
+        """
+        Generate the input message for the editor agent.
+        """
+        if context.control.attempt == 1:
+            instruction = f"""
+            You are an experienced news editor. Your task is to review a list of objects which contains information about the 
+            news articles related to the topic: {context.control.topic}.
+            The structure of the objects is as follows:
+
+            {{
+                    "id": The id of the article,
+                    "author": The author of the article,
+                    "title": The title of the article,
+                    "description": The description of the article,
+                    "url": The url of the article,
+                    "url_to_image": The url to the image of the article,
+                    "published_at": The date and time the article was published,
+                    "content": The content of the article.
+                }}
+
+            Instructions:
+            1. Analyze the title and content of each article
+            2. After completing your analysis, determine if the articles are relevant to the main topic.
+            3. Return ONLY a Python list of article IDs - no explanations, no other text
+            4. Example output: [1, 2, 3, 4, 5]
+
+            List of selected news articles by the selector agent:\n
+            {context.article_flow.selected_articles_content}
+
+            """
+        else:
+            pass
+        
+        return instruction
