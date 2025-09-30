@@ -39,7 +39,7 @@ def run_news_pipeline() -> None:
         # Run editor agent
         if editor_agent.execute(context):
             logger.info("Editor agent executed successfully")
-            return
+            
         else:
             logger.error("Editor agent failed to execute")
             context.attempt += 1
