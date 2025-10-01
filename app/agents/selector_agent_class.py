@@ -1,14 +1,13 @@
 # app/agents/selector_agent_class.py
 from app.agents.base_agent import BaseAgent
 from app.models.agent_context_schema import AgentContext
-from app.agents.selector_agent import select_articles
 from app.services.openai_client import ask_openai
 import re
 import asyncio
 import ast
 from app.services.logger import api_logger as logger
 from app.services.db_tools import get_articles_using_ids_from_db
-
+from app.db.session import SessionLocal
 class SelectorAgent(BaseAgent):
     """
     Agent responsible for selecting the most relevant articles from the database.
@@ -16,7 +15,7 @@ class SelectorAgent(BaseAgent):
     def __init__(self, name: str, max_retries: int = 2):
         super().__init__(name, max_retries)
 
-    def execute(self, context: AgentContext, *args, **kwargs) -> bool:
+    def execute(self, context: AgentContext, db: SessionLocal, *args, **kwargs) -> bool:
         """ 
         Agent for selecting the most relevant articles.
         """
@@ -37,9 +36,9 @@ class SelectorAgent(BaseAgent):
             context.agent_states.selector.last_response = result
             context.agent_states.selector.history.append({'role': 'assistant', 'content': result})
             context.article_flow.selected_articles_ids = parsed_result
-            context.article_flow.selected_articles_content = get_articles_using_ids_from_db(parsed_result)
+            context.article_flow.selected_articles_content = get_articles_using_ids_from_db(parsed_result, db)
         else:
-            logger.error(f"Error: parse_response() function failed to parse the response: {result}")
+            logger.error(f"Error: parse_response() function failed to parse the response")
             return False
         
         # If the number of selected articles is equal to the target articles, return True
@@ -47,7 +46,7 @@ class SelectorAgent(BaseAgent):
         if len(context.article_flow.selected_articles_ids) == context.control.target_articles:
             return True
         else:
-            logger.error(f"Error the number of selected articles is not equal to the target articles: {result}")
+            logger.error(f"Error the number of selected articles is not equal to the target articles")
             return False
  
 

@@ -3,7 +3,7 @@ from app.models.agent_context_schema import AgentContext
 from app.services.openai_client import ask_openai
 from app.services.logger import agent_logger as logger
 from app.services.db_tools import get_articles_using_ids_from_db
-
+from app.db.session import SessionLocal
 class EditorAgent(BaseAgent):
     """
     Agent responsible for editing the articles.
@@ -11,7 +11,7 @@ class EditorAgent(BaseAgent):
     def __init__(self, name: str, max_retries: int = 2):
         super().__init__(name, max_retries)
     
-    def execute(self, context: AgentContext, *args, **kwargs) -> bool:
+    def execute(self, context: AgentContext, db: SessionLocal, *args, **kwargs) -> bool:
         """
         Agent for editing the articles.
         """
@@ -27,11 +27,11 @@ class EditorAgent(BaseAgent):
                     context.agent_states.editor.last_response = result
                     context.agent_states.editor.history.append({'role': 'assistant', 'content': result})
                     context.article_flow.approved_articles_ids = parsed_result
-                    context.article_flow.approved_articles_content = get_articles_using_ids_from_db(parsed_result)
+                    context.article_flow.approved_articles_content = get_articles_using_ids_from_db(parsed_result, db)
                     return True
                 else:
                     context.article_flow.rejected_articles_ids = [article for article in context.article_flow.selected_articles_ids if article not in parsed_result]
-                    context.article_flow.rejected_articles_content = get_articles_using_ids_from_db(context.article_flow.rejected_articles_ids)
+                    context.article_flow.rejected_articles_content = get_articles_using_ids_from_db(context.article_flow.rejected_articles_ids, db)
                     return False
             else:
                 logger.error(f"Error: parse_response() function failed to parse the response: {result}")

@@ -14,7 +14,16 @@ class SentimentAnalysisAgent(BaseAgent):
         """
         Agent for analyzing the sentiment of the articles.
         """
-        pass
+        try:
+            instruction = self.generate_input_message(context)
+            message = {"role": "system", "content": instruction}
+            context.agent_states.sentiment_analysis.history.append(message)
+            result = ask_openai(context.agent_states.sentiment_analysis.history)
+            parsed_result = self.parse_response(result, context)
+            return parsed_result
+        except Exception as e:
+            logger.error(f"Error in sentiment analysis agent: {e}")
+            return False
     
     def generate_input_message(self, context: AgentContext, *args, **kwargs) -> str:
         """
@@ -47,17 +56,17 @@ class SentimentAnalysisAgent(BaseAgent):
             {{
                 "id": 1,
                 "rating": 50,
-                "sentiment": "The article is neutral."
+                "sentiment": "The article presents optimistic economic indicators with cautious undertones about potential challenges..."
             }},
             {{
-                "id": 1,
+                "id": 2,
                 "rating": 75,
-                "sentiment": "The article is positive."
+                "sentiment": "The article highlights positive economic indicators with cautious undertones about potential challenges..."
             }},
             {{
                 "id": 3,
                 "rating": 25,
-                "sentiment": "The article is negative."
+                "sentiment": "The article presents a negative outlook on the economy with a focus on potential risks and challenges..."
             }}
         ]
         5. The number of output objects must be equal to the number of input objects.
