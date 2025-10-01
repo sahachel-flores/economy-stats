@@ -12,8 +12,10 @@ class PipelineControl(BaseModel):
     max_attempts: int = Field(default=2, description="Maximum retry attempts")
     topic: str = Field(default="US Economy", description="News topic to focus on")
     target_articles: int = Field(default=5, description="Target number of approved articles")
+    obtained_articles_from_news_api: int = Field(default=0, description="Number of articles obtained from News API")
     from_date: str = Field(default="2025-06-17", description="Article date range start")
     to_date: str = Field(default="2025-06-17", description="Article date range end")
+    max_tokens: int = Field(default=128000, description="Maximum number of tokens for the pipeline")
 
 class ArticleFlow(BaseModel):
     """
@@ -33,6 +35,11 @@ class SelectorState(BaseModel):
 
 class EditorState(BaseModel):
     history: List[dict] = Field(default_factory=list, description="OpenAI conversation history") 
+    execution_count: int = Field(default=0, description="Number of times executed")
+    last_response: Optional[str] = Field(default=None, description="Last raw OpenAI response")
+
+class SentimentAnalysisState(BaseModel):
+    history: List[dict] = Field(default_factory=list, description="OpenAI conversation history")
     execution_count: int = Field(default=0, description="Number of times executed")
     last_response: Optional[str] = Field(default=None, description="Last raw OpenAI response")
 
