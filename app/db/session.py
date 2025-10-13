@@ -2,10 +2,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from app.services.logger import api_logger as logger
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
-SQLALCHEMY_DATABASE_URL = 'sqlite:///./newsarticles.db'
-#POSTGRES_DATABASE_URL = 'postgresql://postgres:postgres@localhost/TodoApplicationDatabase'
-
+SQLALCHEMY_DATABASE_URL = os.getenv("SQLALCHEMY_DATABASE_URL")
 
 # Creating our enginer, needs database path, connect_args allows to define some kind of connection to a database.
 # We have false for check_same_thread to prevent accident sharing of the same connection

@@ -35,15 +35,20 @@ def run_news_pipeline() -> None:
     remove_all_articles_from_db(db)
     while context.should_continue():
 
-        # getting the articles from the news api
-        if not db_has_items(db, from_date=context.control.from_date):
-            raw_articles = get_news_articles_from_news_api(query=context.control.topic, from_date=context.control.from_date, to_date=context.control.to_date, context=context)
-            if raw_articles:
-                # adding the articles to the database
-                add_articles_to_db(raw_articles, db)
-        else:
-            # getting the articles from the database
+        try:
+            # getting the articles from the news api
+            if not db_has_items(db, from_date=context.control.from_date):
+                raw_articles = get_news_articles_from_news_api(query=context.control.topic, from_date=context.control.from_date, to_date=context.control.to_date, context=context)
+                if raw_articles:
+                    # adding the articles to the database
+                    add_articles_to_db(raw_articles, db)
+                else:
+                    logger.error("No articles found. Exiting the pipeline.")
+                    return
             articles = get_all_articles_from_db(db, from_date=context.control.from_date)
+        except Exception as e:
+            logger.error(f"Error getting articles from the database: {e}")
+            return
 
         # verifying that the database returns
         if len(articles) > 0:

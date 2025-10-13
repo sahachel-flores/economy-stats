@@ -41,13 +41,26 @@ def get_all_articles_from_db(db: SessionLocal, from_date:str = None) -> list[dic
     try:
         return_articles = []
         if from_date:
-            articles = db.execute(text(f"SELECT * FROM news_articles where published_at >= '{from_date}'")).fetchall()
+            #articles = db.execute(text(f"SELECT * FROM news_articles where published_at >= '{from_date}'")).fetchall()
+            articles = db.query(NewsArticles).filter(NewsArticles.published_at >= from_date).all()
         else:
-            articles = db.execute(text(f"SELECT * FROM news_articles")).fetchall()
+            #articles = db.execute(text(f"SELECT * FROM news_articles")).fetchall()
+            articles = db.query(NewsArticles).all()
 
         if articles:
             for a in articles:
-                return_articles.append(a._asdict())
+                return_articles.append(
+                    {
+                        "id": a.id,
+                        "author": a.author,
+                        "title": a.title,
+                        "description": a.description,
+                        "url": a.url,
+                        "url_to_image": a.url_to_image,
+                        "published_at": a.published_at,
+                        "content": a.content
+                    }
+                )
         else:
             logger.info("No articles found in the database")
         return return_articles
