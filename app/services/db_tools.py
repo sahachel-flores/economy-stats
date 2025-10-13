@@ -21,7 +21,6 @@ def add_articles_to_db(articles: list[dict], db: SessionLocal) -> bool:
             )
 
             # Add the article to the database
-            #logger.info(f"Adding article to the database: {article_db}")
             db.add(article_db)
         db.commit()
         return True
@@ -30,7 +29,7 @@ def add_articles_to_db(articles: list[dict], db: SessionLocal) -> bool:
         db.rollback()
         return False
     finally:
-        db.close()
+        db.rollback()
 
    
 def get_all_articles_from_db(db: SessionLocal, from_date:str = None) -> list[dict]:
@@ -41,10 +40,8 @@ def get_all_articles_from_db(db: SessionLocal, from_date:str = None) -> list[dic
     try:
         return_articles = []
         if from_date:
-            #articles = db.execute(text(f"SELECT * FROM news_articles where published_at >= '{from_date}'")).fetchall()
             articles = db.query(NewsArticles).filter(NewsArticles.published_at >= from_date).all()
         else:
-            #articles = db.execute(text(f"SELECT * FROM news_articles")).fetchall()
             articles = db.query(NewsArticles).all()
 
         if articles:
@@ -68,7 +65,7 @@ def get_all_articles_from_db(db: SessionLocal, from_date:str = None) -> list[dic
         logger.error(f"Error getting articles from db: {e}")
         return []
     finally:
-        db.close()
+        db.rollback()
 
 def get_articles_using_ids_from_db(ids: list[int], db: SessionLocal) -> list[dict]:
     """
@@ -82,13 +79,22 @@ def get_articles_using_ids_from_db(ids: list[int], db: SessionLocal) -> list[dic
         # Iterate over the ids
         for id in ids:
             # Get the article from the database
-            #article = db.query(NewsArticles).filter(NewsArticles.id == id).first()
-            article = db.execute(text(f"SELECT * FROM news_articles where id == '{id}'")).fetchall()
-            article = article[0]._asdict()
-
-            # If the article is found, add it to the list
+            article = db.query(NewsArticles).filter(NewsArticles.id == id).first()
             if article:
-                articles.append(article)
+                article_dict = {
+                    "id": article.id,
+                    "author": article.author,
+                    "title": article.title,
+                    "description": article.description,
+                    "url": article.url,
+                    "url_to_image": article.url_to_image,
+                    "published_at": article.published_at,
+                    "content": article.content
+                }
+                articles.append(article_dict)
+            else:
+                logger.error(f"Article with id {id} not found")
+                return []
 
         # Return the list of articles
         return articles
@@ -97,7 +103,7 @@ def get_articles_using_ids_from_db(ids: list[int], db: SessionLocal) -> list[dic
         return []
     finally:
         # Close the database session
-        db.close()
+        db.rollback()
 
 def db_has_items(db: SessionLocal, from_date:str = None) -> bool:
     try:
@@ -106,7 +112,7 @@ def db_has_items(db: SessionLocal, from_date:str = None) -> bool:
         else:
             return db.query(NewsArticles).count() > 0
     finally:
-        db.close()
+        db.rollback()
 
 def remove_all_articles_from_db(db: SessionLocal) -> bool:
     """
@@ -121,7 +127,7 @@ def remove_all_articles_from_db(db: SessionLocal) -> bool:
         db.rollback()
         return False
     finally:
-        db.close()
+        db.rollback()
 
 
 

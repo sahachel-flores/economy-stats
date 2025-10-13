@@ -31,58 +31,59 @@ def run_news_pipeline() -> None:
     # initializing the database session
     db = SessionLocal()
     # running the pipeline
+    try:
+        remove_all_articles_from_db(db)
+        while context.should_continue():
 
-    remove_all_articles_from_db(db)
-    while context.should_continue():
+            try:
+                # getting the articles from the news api
+                if not db_has_items(db, from_date=context.control.from_date):
+                    raw_articles = get_news_articles_from_news_api(query=context.control.topic, from_date=context.control.from_date, to_date=context.control.to_date, context=context)
+                    if raw_articles:
+                        # adding the articles to the database
+                        add_articles_to_db(raw_articles, db)
+                    else:
+                        logger.error("No articles found. Exiting the pipeline.")
+                        return
+                articles = get_all_articles_from_db(db, from_date=context.control.from_date)
+            except Exception as e:
+                logger.error(f"Error getting articles from the database: {e}")
+                return
 
-        try:
-            # getting the articles from the news api
-            if not db_has_items(db, from_date=context.control.from_date):
-                raw_articles = get_news_articles_from_news_api(query=context.control.topic, from_date=context.control.from_date, to_date=context.control.to_date, context=context)
-                if raw_articles:
-                    # adding the articles to the database
-                    add_articles_to_db(raw_articles, db)
-                else:
-                    logger.error("No articles found. Exiting the pipeline.")
-                    return
-            articles = get_all_articles_from_db(db, from_date=context.control.from_date)
-        except Exception as e:
-            logger.error(f"Error getting articles from the database: {e}")
-            return
-
-        # verifying that the database returns
-        if len(articles) > 0:
-            context.article_flow.raw_articles.append(raw_articles)
-            logger.info(f"Number of articles: {len(articles)}\n\n")
-        else:
-            # TODO: when UI is implemented, we should show a message to the user that no articles were found for the given topic and date range
-            logger.info("No articles found. Exiting the pipeline.")
-            return
-        
-        # Running the selector agent
-        if selector_agent.execute(context, db):
-            logger.info("Selector agent executed successfully")
+            # verifying that the database returns
+            if len(articles) > 0:
+                context.article_flow.raw_articles.append(raw_articles)
+                logger.info(f"Number of articles: {len(articles)}\n\n")
+            else:
+                # TODO: when UI is implemented, we should show a message to the user that no articles were found for the given topic and date range
+                logger.info("No articles found. Exiting the pipeline.")
+                return
             
-        else:
-            logger.error("Selector agent failed to execute")
+            # Running the selector agent
+            if selector_agent.execute(context, db):
+                logger.info("Selector agent executed successfully")
+                
+            else:
+                logger.error("Selector agent failed to execute")
+                return
+            
+            # Run editor agent
+            if editor_agent.execute(context, db):
+                logger.info("Editor agent executed successfully")
+                context.control.attempt += 1
+            else:
+                logger.error("Editor agent failed to execute")
+                return
+            # remove all articles from the database
+            #remove_all_articles_from_db()
             return
-        
-        # Run editor agent
-        if editor_agent.execute(context, db):
-            logger.info("Editor agent executed successfully")
-            context.control.attempt += 1
-        else:
-            logger.error("Editor agent failed to execute")
-            return
-        # remove all articles from the database
-        #remove_all_articles_from_db()
-        return
-        
-        # Run verifier agent
-        #verified_articles(context)
-        #context.attempt += 1
-        
-
+            
+            # Run verifier agent
+            #verified_articles(context)
+            #context.attempt += 1
+            
+    finally:
+        db.close()
     # logger.info(f"We are out of attempts. Selected {len(context.selected_articles)} articles.")
     
 run_news_pipeline()

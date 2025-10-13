@@ -19,7 +19,6 @@ def get_articles_from_ids(ids: list[int]) -> list[dict]:
         # Iterate over the ids
         for id in ids:
             # Get the article from the database
-            #article = db.execute(text(f"SELECT * FROM news_articles where id == '{id}'")).fetchall()
             article = db.query(NewsArticles).filter(NewsArticles.id == id).first()
             if article:
                 article_dict = {
