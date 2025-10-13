@@ -86,7 +86,7 @@ def get_articles_using_ids_from_db(ids: list[int], db: SessionLocal) -> list[dic
         # Close the database session
         db.close()
 
-def test_db_has_items(db: SessionLocal, from_date:str = None) -> bool:
+def db_has_items(db: SessionLocal, from_date:str = None) -> bool:
     try:
         if from_date:
             return db.query(NewsArticles).filter(NewsArticles.published_at >= from_date).count() > 0

@@ -7,6 +7,7 @@ from app.agents.selector_agent_class import SelectorAgent
 from app.agents.editor_agent_class import EditorAgent
 from app.services.db_tools import remove_all_articles_from_db, add_articles_to_db, get_all_articles_from_db
 from app.db.session import SessionLocal
+from app.services.db_tools import db_has_items
 import asyncio
 
 def run_news_pipeline() -> None:
@@ -35,13 +36,14 @@ def run_news_pipeline() -> None:
     while context.should_continue():
 
         # getting the articles from the news api
-        raw_articles = get_news_articles_from_news_api(query=context.control.topic, from_date=context.control.from_date, to_date=context.control.to_date, context=context, db=db)
-        if raw_articles:
-            # adding the articles to the database
-            add_articles_to_db(raw_articles, db)
-        
-        # getting the articles from the database
-        articles = get_all_articles_from_db(db, from_date=context.control.from_date)
+        if not db_has_items(db, from_date=context.control.from_date):
+            raw_articles = get_news_articles_from_news_api(query=context.control.topic, from_date=context.control.from_date, to_date=context.control.to_date, context=context)
+            if raw_articles:
+                # adding the articles to the database
+                add_articles_to_db(raw_articles, db)
+        else:
+            # getting the articles from the database
+            articles = get_all_articles_from_db(db, from_date=context.control.from_date)
 
         # verifying that the database returns
         if len(articles) > 0:

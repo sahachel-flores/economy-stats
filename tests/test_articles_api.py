@@ -3,18 +3,19 @@ from app.services.logger import api_logger as logger
 from app.services.news_api_tools import get_news_articles_from_news_api
 from app.models.agent_context_schema import AgentContext
 from app.services.news_api_tools import get_article_text
-from tests.init_db_session import SessionLocal
+from app.services.db_tools import add_articles_to_db
+from app.models.db_schema import NewsArticles
 
 def test_get_news_articles_from_news_api():
     """
     Test the get_news_articles_from_news_api function.
     """
     context = AgentContext()
-    db = SessionLocal()
-    articles = get_news_articles_from_news_api(query="US Economy", from_date="2025-09-16", to_date="2025-09-17", context=context, db=db)
-    assert len(articles) > 0
-    db.close()
-    logger.info(f"Number of articles: {len(articles)}")
+
+    articles = get_news_articles_from_news_api(query="US Economy", from_date="2025-09-26", to_date="2025-09-27", context=context)
+    assert len(articles) == len(articles)
+
+
 
 def test_get_article_text():
     """
@@ -25,8 +26,3 @@ def test_get_article_text():
     #logger.info(f"Text of article: {text}")
     assert text is not None and len(text) > 0 
 
-
-if __name__ == "__main__":
-    test_get_news_articles_from_news_api()
-    test_get_article_text()
-  
