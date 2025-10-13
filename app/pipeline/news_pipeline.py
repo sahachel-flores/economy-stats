@@ -81,9 +81,11 @@ def run_news_pipeline() -> None:
             # Run verifier agent
             #verified_articles(context)
             #context.attempt += 1
-            
+    except Exception as e:
+        logger.error(f"Error running the news pipeline: {e}")
+        return
     finally:
-        db.close()
+        db.rollback()
     # logger.info(f"We are out of attempts. Selected {len(context.selected_articles)} articles.")
     
 run_news_pipeline()
