@@ -33,6 +33,9 @@ class SelectorState(BaseModel):
     history: List[dict] = Field(default_factory=list, description="OpenAI conversation history")
     execution_count: int = Field(default=0, description="Number of times executed")
     last_response: Optional[str] = Field(default=None, description="Last raw OpenAI response")
+    attempt: int = Field(default=1, description="Selector agent attempt")
+    max_attempts: int = Field(default=2, description="Maximum number of attempts to use selector agent")
+    feedback: str = Field(default=None, description="Feedback from user")
 
 class EditorState(BaseModel):
     history: List[dict] = Field(default_factory=list, description="OpenAI conversation history") 

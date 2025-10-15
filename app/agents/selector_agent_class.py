@@ -2,60 +2,81 @@
 from app.agents.base_agent import BaseAgent
 from app.models.agent_context_schema import AgentContext
 from app.services.openai_client import ask_openai
-import re
-import asyncio
-import ast
 from app.services.logger import api_logger as logger
 from app.services.db_tools import get_articles_using_ids_from_db
 from app.db.session import SessionLocal
+from app.exceptions.agent_exceptions import AgentExecutionError
+
+
 class SelectorAgent(BaseAgent):
     """
     Agent responsible for selecting the most relevant articles from the database.
     """
     def __init__(self, name: str, max_retries: int = 2):
         super().__init__(name, max_retries)
+        self.llm_client = ask_openai
+        self.article_fetcher = get_articles_using_ids_from_db
+        self.logger = logger
 
     def execute(self, context: AgentContext, db: SessionLocal, *args, **kwargs) -> bool:
         """ 
         Agent for selecting the most relevant articles.
         """
-        # Generating the input message
-        instruction = self.generate_input_message(context)
-        if instruction:
-            message = {"role": "system", "content": instruction}
-        else:
-            logger.error("Error generating input message")
-            return False
-        # Appending the input message to the history
-        context.agent_states.selector.history.append(message)
-        # Asking the openai model for the response
-        result = ask_openai(context.agent_states.selector.history)
-        # Parsing the response
-        parsed_result = self.parse_response(result, context)
-        if parsed_result:
-            context.agent_states.selector.last_response = result
-            context.agent_states.selector.history.append({'role': 'assistant', 'content': result})
-            context.article_flow.selected_articles_ids = parsed_result
-            context.article_flow.selected_articles_content = get_articles_using_ids_from_db(parsed_result, db)
-        else:
-            logger.error(f"Error: parse_response() function failed to parse the response")
-            return False
-        
-        # If the number of selected articles is equal to the target articles, return True
-        # TODO: need to handle case where input number of articles is less than target articles
-        if len(context.article_flow.selected_articles_ids) == context.control.target_articles:
-            return True
-        else:
-            logger.error(f"Error the number of selected articles is not equal to the target articles")
-            return False
- 
+        try:
+            while context.agent_states.selector.attempt <= context.agent_states.selector.max_attempts:
+                self.logger.info(f"Executing selector agent... Attempt {context.control.attempt}")
+                # Generating the input message
+                prompt = self.generate_input_message(context)
+                if not prompt:
+                    raise AgentExecutionError("Selector agent: Error generating input message")
 
-    def generate_input_message(self, context: AgentContext, *args, **kwargs) -> str:
+                # Appending the input message to the history
+                system_message = {"role": "system", "content": prompt}
+                context.agent_states.selector.history.append(system_message)
+
+                # Asking the openai model for the response
+                result = self.llm_client(context.agent_states.selector.history)
+                if not result:
+                    raise AgentExecutionError("Selector agent: Error ask_openai function failed to return a result")
+
+                # Parsing the response
+                parsed_result = self.parse_response(result, context)
+                if not parsed_result:
+                    raise AgentExecutionError("Selector agent: Error parsing the response")
+
+                # Updating response and history to context
+                context.agent_states.selector.last_response = result
+                context.agent_states.selector.history.append({'role': 'assistant', 'content': result})
+                context.article_flow.selected_articles_ids = parsed_result
+                context.article_flow.selected_articles_content = get_articles_using_ids_from_db(parsed_result, db)
+    
+                
+                # Handling the llm response where the number of selected articles is =, <, or > than the target articles
+                if len(context.article_flow.selected_articles_ids) == context.control.target_articles:
+                    # Cleaning the feedback if it exists
+                    if context.agent_states.selector.feedback:
+                        context.agent_states.selector.feedback = None
+                    return True
+                elif len(context.article_flow.selected_articles_ids) < context.control.target_articles:
+                    self.logger.info(f"Selector agent: number of selected articles is less than the target articles")
+                    context.agent_states.selector.feedback = "the number of selected articles is less than the target articles, read instructions again and retry again."
+                else:
+                    self.logger.info(f"Selector agent: number of selected articles is greater than the target articles")
+                    context.agent_states.selector.feedback = "the number of selected articles is greater than the target articles, read instructions again and retry again."
+                    continue
+                context.agent_states.selector.attempt += 1
+
+        except Exception as e:
+            self.logger.error(f"Selector agent failed to execute: {e}")
+            return False
+    
+    
+    def generate_input_message(self, context: AgentContext, feedback: str = None, *args, **kwargs) -> str:
         """ 
         Generate the input message for the selector agent.
         """
         message = ""
-        if context.control.attempt == 1:
+        if context.control.attempt == 1 and context.agent_states.selector.attempt == 1:
             message = f"""
             You are an expert news analyst. Select the {context.control.target_articles} most relevant articles about {context.control.topic}.
             You will be given a list of objects which contains information about the news articles in the following structure:
@@ -84,6 +105,13 @@ class SelectorAgent(BaseAgent):
             List of news articles:\n
             {context.article_flow.raw_articles}
             """
+        elif context.agent_states.selector.attempt == 1 and context.agent_states.selector.feedback:
+            message = f"""
+            Your last response was: {context.agent_states.selector.last_response}
+            This response is in correct because {context.agent_states.selector.feedback}.
+            """
+
+        
         else:
             message = f"""
             The editor agent has rejected {len(context.article_flow.rejected_articles_ids)} articles. 
@@ -101,7 +129,8 @@ class SelectorAgent(BaseAgent):
 
             """
         return message
-        
+    
+
 
         
     
