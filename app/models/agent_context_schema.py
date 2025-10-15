@@ -22,6 +22,7 @@ class ArticleFlow(BaseModel):
     Articles at different stages of the pipeline
     """
     raw_articles: List[dict] = Field(default_factory=list, description="Original articles from News API")
+    articles_from_db: List[dict] = Field(default_factory=list, description="Articles from the database")
     selected_articles_ids: List[int] = Field(default_factory=list, description="IDs selected by selector agent")
     selected_articles_content: List[dict] = Field(default_factory=list, description="Full content of selected articles")
     approved_articles_ids: List[int] = Field(default_factory=list, description="IDs approved by editor agent")

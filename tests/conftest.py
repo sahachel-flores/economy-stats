@@ -4,6 +4,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.db.session import Base
 
+
+
 @pytest.fixture
 def db_connection():
     """Create a fresh in-memory database for each test"""
