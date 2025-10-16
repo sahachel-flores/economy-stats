@@ -46,7 +46,7 @@ def fetch_articles(context, db):
             raise FetchError("Data returned no articles after insertion")
                   
         # adding the articles to the context
-        context.article_flow.articles_from_db.append(articles_from_db[0])
+        context.article_flow.articles_from_db.extend(articles_from_db)
         logger.info(f"Number of articles: {len(context.article_flow.articles_from_db)}\n\n")
     except Exception as e:
         raise FetchError(f"Failed fetching articles: {e}") from e
@@ -59,7 +59,7 @@ def run_agents(context, db, selector_agent, editor_agent):
         if not selector_agent.execute(context, db):
             raise Exception("Selector agent failed to execute")
         if not editor_agent.execute(context, db):
-            raise Exception("Editor agent failed to execute")
+            context.control.attempt += 1
 
     except Exception as e:
         raise Exception(f"Agent execution failed: {e}")
@@ -99,8 +99,7 @@ def run_news_pipeline() -> None:
                 except Exception as e:
                     logger.error(f"Error while getting articles: {e}")
                     raise e
-                finally:
-                    context.control.attempt += 1
+
 
     except Exception as e:
         raise Exception(f"Fatal error in the news pipeline: {e}")

@@ -29,7 +29,7 @@ def ask_openai(messages: list, model: str = MODEL, temperature: float = 0.3) -> 
     
         
     except Exception as e:
-        logger.error(f"[OpenAI Error] {e}")
+        logger.error(f"Fatal ---> [OpenAI Error] {e}")
         return []
 
 

@@ -23,8 +23,9 @@ class SelectorAgent(BaseAgent):
         Agent for selecting the most relevant articles.
         """
         try:
+            context.agent_states.selector.attempt = 1
             while context.agent_states.selector.attempt <= context.agent_states.selector.max_attempts:
-                self.logger.info(f"Executing selector agent... Attempt {context.control.attempt}")
+                self.logger.info(f"Executing selector agent... Attempt {context.control.attempt} target articles: {context.control.target_articles}")
                 # Generating the input message
                 prompt = self.generate_input_message(context)
                 if not prompt:
@@ -49,25 +50,27 @@ class SelectorAgent(BaseAgent):
                 context.agent_states.selector.history.append({'role': 'assistant', 'content': result})
                 context.article_flow.selected_articles_ids = parsed_result
                 context.article_flow.selected_articles_content = get_articles_using_ids_from_db(parsed_result, db)
-    
-                
+                if not context.article_flow.selected_articles_content:
+                    raise AgentExecutionError("Selector agent: Error getting the articles from the database")
+
                 # Handling the llm response where the number of selected articles is =, <, or > than the target articles
-                if len(context.article_flow.selected_articles_ids) == context.control.target_articles:
+                if len(context.article_flow.selected_articles_ids) == context.control.target_articles :
                     # Cleaning the feedback if it exists
                     if context.agent_states.selector.feedback:
                         context.agent_states.selector.feedback = None
                     return True
-                elif len(context.article_flow.selected_articles_ids) < context.control.target_articles:
+                elif len(context.article_flow.selected_articles_ids) < context.control.target_articles :
                     self.logger.info(f"Selector agent: number of selected articles is less than the target articles")
                     context.agent_states.selector.feedback = "the number of selected articles is less than the target articles, read instructions again and retry again."
                 else:
                     self.logger.info(f"Selector agent: number of selected articles is greater than the target articles")
                     context.agent_states.selector.feedback = "the number of selected articles is greater than the target articles, read instructions again and retry again."
-                    continue
+
                 context.agent_states.selector.attempt += 1
 
         except Exception as e:
             self.logger.error(f"Selector agent failed to execute: {e}")
+            
             return False
     
     
@@ -105,18 +108,17 @@ class SelectorAgent(BaseAgent):
             List of news articles:\n
             {context.article_flow.raw_articles}
             """
-        elif context.agent_states.selector.attempt == 1 and context.agent_states.selector.feedback:
+        elif context.agent_states.selector.attempt > 1 and context.agent_states.selector.feedback:
             message = f"""
-            Your last response was: {context.agent_states.selector.last_response}
-            This response is in correct because {context.agent_states.selector.feedback}.
+            Your last response is not correct because {context.agent_states.selector.feedback}.
             """
 
         
-        else:
+        elif context.control.attempt > 1:
             message = f"""
             The editor agent has rejected {len(context.article_flow.rejected_articles_ids)} articles. 
             The following articles with ids: {context.article_flow.rejected_articles_ids} were rejected. 
-            You will reselect {len(context.article_flow.rejected_articles_ids)} news articles.
+            You will reselect {context.control.target_articles} news articles.
         
             Instructions:
             1. Revisit the list of candidate articles and review the content of each article. 
@@ -125,7 +127,7 @@ class SelectorAgent(BaseAgent):
             4. The number of selected articles must be the same as the number of rejected articles.
             5. Return only a python list containing the ids of the selected articles. Do not add any other text.
 
-            The ids of the approved articles are: {context.approved_articles_ids}. Make sure not to select them
+            The ids of the approved articles are: {context.article_flow.approved_articles_ids}. Make sure not to select them
 
             """
         return message

@@ -30,7 +30,7 @@ class BaseAgent(ABC):
                     parsed = ast.literal_eval(match.group())
                     if isinstance(parsed, list) and all(isinstance(item, int) for item in parsed):
                         logger.info(f"Parsed list: {parsed} successfully")
-                        context.article_flow.selected_articles_ids = parsed
+                        #context.article_flow.selected_articles_ids = parsed
                         return parsed
                 except Exception as e:
                     logger.error(f"Error parsing response with method1: {e}")
@@ -40,7 +40,7 @@ class BaseAgent(ABC):
             if numbers:
                 result = [int(x) for x in numbers]
                 logger.info(f"Parsed list: {result} successfully")
-                context.article_flow.selected_articles_ids = result
+                #context.article_flow.selected_articles_ids = result
                 return result
             else:
                 logger.error("Error parsing response with method2")
@@ -53,7 +53,7 @@ class BaseAgent(ABC):
                     numbers = [int(x.strip()) for x in match.split(',')]
                     if len(numbers) > 0:
                         logger.info(f"Parsed list: {numbers} successfully")
-                        context.article_flow.selected_articles_ids = numbers
+                        #context.article_flow.selected_articles_ids = numbers
                         return numbers
                 except Exception as e:
                     logger.error(f"Error parsing response with method3: {e}")
