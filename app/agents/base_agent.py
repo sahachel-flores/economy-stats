@@ -66,6 +66,7 @@ class BaseAgent(ABC):
             logger.error(f"Unexpected Error occured while parsing response: {e}")
             return []
     
+    # TODO: Implement these methods in the future
     # @abstractmethod
     # def validate_input(self, context: AgentContext, *args, **kwargs) -> bool:
     #     """
@@ -78,16 +79,9 @@ class BaseAgent(ABC):
     #     """
     #     Validate the output of the agent and return a boolean indicating if the output is valid.
     #     """
-
     #     pass
 
-    # @abstractmethod
-    # def run_with_retry(self, context: AgentContext, *args, **kwargs) -> bool:
-    #     """
-    #     Run the agent with retry logic.
-    #     """
-    #     pass
-    
+
     # @abstractmethod
     # def get_agent_stats(self, context: AgentContext) -> dict:
     #     """
@@ -95,8 +89,3 @@ class BaseAgent(ABC):
     #     """
     #     pass
     
-    # @abstractmethod
-    # def get_agent_history(self, context: AgentContext) -> list[dict]:
-    #     """
-    #     Get the history of the agent.
-    #     """

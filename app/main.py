@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import news  # routers imports 
+from app.routers import news, homepage  # routers imports 
 from app.db.init_db import init_db
 
 # initialize the FastAPI app with metadata
@@ -23,10 +23,9 @@ app.add_middleware(
 )
 
 ## API endpoints
-#app.include_router(homepage.router)
+app.include_router(homepage.router)
 app.include_router(news.router)
-#app.include_router(predictions.router)
-#app.include_router(resources.router)
+
 
 @app.get("/")
 async def root():
