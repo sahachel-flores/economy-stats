@@ -65,7 +65,7 @@ def run_agents(context, db, selector_agent, editor_agent):
         raise Exception(f"Agent execution failed: {e}")
 
 
-def run_news_pipeline() -> None:
+def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentContext) -> None:
     """
     Orchestrates the full news analysis pipeline:
     - Scrapes articles
@@ -75,7 +75,6 @@ def run_news_pipeline() -> None:
     logger.info("Running news pipeline...")
     #logger.info(f"items in db: {get_all_articles_from_db()}")
     # initializing the agent context
-    context = AgentContext()
     context.control.topic = "US Economy"
     context.control.from_date = "2025-09-29"
     context.control.to_date = "2025-09-29"

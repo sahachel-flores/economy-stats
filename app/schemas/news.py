@@ -21,5 +21,5 @@ class NewsOut(BaseModel):
     content: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+class Config:
+    from_attributes = True
