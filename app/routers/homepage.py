@@ -1,19 +1,15 @@
-from fastapi import APIRouter, HTTPException, Request 
-from app.services.logger import api_logger
-from app.services.stats_services import get_economic_stats
-from app.models.agent_context_schema import AgentContext
+from fastapi import APIRouter, Depends, HTTPException, Request 
 from app.pipeline.news_pipeline import run_news_pipeline
-
-
+from app.core.dependecies import get_context
+from app.core.run_context import RunContext
 router = APIRouter(
     prefix='/homepage',
     tags=['homepage']
 )
 
 @router.get("/")
-async def homepage():
-    stats = get_economic_stats()
-    context = AgentContext()
-    run_news_pipeline(query="economy", from_date="2025-10-01", to_date="2025-10-01", context=context)
+async def homepage(context_dependency = Depends(get_context)):
+    run_context = RunContext(context_dependency)
+    run_news_pipeline(query="economy", from_date="2025-10-01", to_date="2025-10-01", context=run_context)
 
-    return stats
+    return [run_context.article_flow.approved_articles_content]

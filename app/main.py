@@ -3,14 +3,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import news, homepage  # routers imports 
 from app.db.init_db import init_db
 from fastapi.staticfiles import StaticFiles
+from app.models.agent_context_schema import AgentContext
+from contextlib import asynccontextmanager
 
+@asynccontextmanager
+async def create_context():
+    """
+    This function creates the context for the application.
+    """
+    app.state.context = AgentContext()
+    try:
+        yield
+    finally:
+        pass
 
 # initialize the FastAPI app with metadata
-app = FastAPI(
-    title="Economy Stats AI",
-    description="A FastAPI backend that uses AI agents to analyze and summarize the US economy.",
-    version="1.0.0"
-)
+app = FastAPI(lifespan=create_context)
 
 # Creating static file within our directory
 app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend") 
@@ -34,6 +42,6 @@ async def root():
 
 ## API endpoints
 app.include_router(homepage.router)
-app.include_router(news.router)
+#app.include_router(news.router)
 
 
