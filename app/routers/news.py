@@ -1,14 +1,19 @@
 from fastapi import APIRouter, HTTPException, Request 
 from app.models.news_schema import News
 from app.services.logger import api_logger
-
+from app.db.session import SessionLocal
 
 router = APIRouter(
     prefix='/news',
     tags=['news']
 )
 
-CATEGORIES = ["economy", "housing", "labor", "stock"]
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 @router.get("/")

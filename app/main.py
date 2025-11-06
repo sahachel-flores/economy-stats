@@ -7,7 +7,7 @@ from app.models.agent_context_schema import AgentContext
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
-async def create_context():
+async def create_context(app: FastAPI):
     """
     This function creates the context for the application.
     """

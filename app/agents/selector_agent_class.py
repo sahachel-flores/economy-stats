@@ -25,16 +25,21 @@ class SelectorAgent(BaseAgent):
         try:
             context.agent_states.selector.attempt = 1
             while context.agent_states.selector.attempt <= context.agent_states.selector.max_attempts:
-                self.logger.info(f"Executing selector agent... Attempt {context.control.attempt} target articles: {context.control.target_articles}")
-                # Generating the input message
-                prompt = self.generate_input_message(context)
-                if not prompt:
-                    raise AgentExecutionError("Selector agent: Error generating input message")
+                if not context.agent_states.selector.feedback:
+                    self.logger.info(f"---------->Executing selector agent... Attempt {context.control.attempt} target articles: {context.control.target_articles}")
+                    # Generating the input message
+                    prompt = self.generate_input_message(context)
+                    if not prompt:
+                        raise AgentExecutionError("Selector agent: Error generating input message")
 
-                # Appending the input message to the history
-                system_message = {"role": "system", "content": prompt}
-                context.agent_states.selector.history.append(system_message)
-
+                    # Appending the input message to the history
+                    system_message = {"role": "system", "content": prompt}
+                    context.agent_states.selector.history.append(system_message)
+                else:
+                    # we have feedback for our agent
+                    prompt = context.agent_states.selector.feedback
+                    system_message = {"role": "system", "content": prompt}
+                    context.agent_states.selector.history.append(system_message)
                 # Asking the openai model for the response
                 result = self.llm_client(context.agent_states.selector.history)
                 if not result:
@@ -52,19 +57,22 @@ class SelectorAgent(BaseAgent):
                 context.article_flow.selected_articles_content = get_articles_using_ids_from_db(parsed_result, db)
                 if not context.article_flow.selected_articles_content:
                     raise AgentExecutionError("Selector agent: Error getting the articles from the database")
-
+                self.logger.info(f"number of needed articles: {context.control.target_articles - len(context.article_flow.approved_articles_ids)}")
                 # Handling the llm response where the number of selected articles is =, <, or > than the target articles
                 if len(context.article_flow.selected_articles_ids) == context.control.target_articles :
                     # Cleaning the feedback if it exists
                     if context.agent_states.selector.feedback:
                         context.agent_states.selector.feedback = None
                     return True
-                elif len(context.article_flow.selected_articles_ids) < context.control.target_articles :
+                elif len(context.article_flow.selected_articles_ids) < context.control.target_articles   :
                     self.logger.info(f"Selector agent: number of selected articles is less than the target articles")
                     context.agent_states.selector.feedback = "the number of selected articles is less than the target articles, read instructions again and retry again."
+                    #return False
                 else:
                     self.logger.info(f"Selector agent: number of selected articles is greater than the target articles")
+
                     context.agent_states.selector.feedback = "the number of selected articles is greater than the target articles, read instructions again and retry again."
+                    #return False
 
                 context.agent_states.selector.attempt += 1
 
@@ -72,7 +80,7 @@ class SelectorAgent(BaseAgent):
             self.logger.error(f"Selector agent failed to execute: {e}")
             
             return False
-    
+        return False
     
     def generate_input_message(self, context: AgentContext, feedback: str = None, *args, **kwargs) -> str:
         """ 
@@ -118,7 +126,7 @@ class SelectorAgent(BaseAgent):
             message = f"""
             The editor agent has rejected {len(context.article_flow.rejected_articles_ids)} articles. 
             The following articles with ids: {context.article_flow.rejected_articles_ids} were rejected. 
-            You will reselect {context.control.target_articles} news articles.
+            You will select {context.control.target_articles} news articles.
         
             Instructions:
             1. Revisit the list of candidate articles and review the content of each article. 

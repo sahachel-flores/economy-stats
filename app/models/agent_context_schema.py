@@ -9,7 +9,7 @@ class PipelineControl(BaseModel):
     Read-only configuration data that agents use for coordination
     """
     attempt: int = Field(default=1, description="Current pipeline attempt")
-    max_attempts: int = Field(default=3, description="Maximum retry attempts")
+    max_attempts: int = Field(default=4, description="Maximum retry attempts")
     topic: str = Field(default="US Economy", description="News topic to focus on")
     target_articles: int = Field(default=5, description="Target number of approved articles")
     obtained_articles_from_news_api: int = Field(default=0, description="Number of articles obtained from News API")
@@ -35,16 +35,16 @@ class SelectorState(BaseModel):
     history: List[dict] = Field(default_factory=list, description="OpenAI conversation history")
     execution_count: int = Field(default=0, description="Number of times executed")
     last_response: Optional[str] = Field(default=None, description="Last raw OpenAI response")
-    attempt: int = Field(default=1, description="Selector agent attempt")
-    max_attempts: int = Field(default=2, description="Maximum number of attempts to use selector agent")
+    attempt: int = Field(default=0, description="Selector agent attempt")
+    max_attempts: int = Field(default=3, description="Maximum number of attempts to use selector agent")
     feedback: str = Field(default=None, description="Feedback from user")
 
 class EditorState(BaseModel):
     history: List[dict] = Field(default_factory=list, description="OpenAI conversation history") 
     execution_count: int = Field(default=0, description="Number of times executed")
     last_response: Optional[str] = Field(default=None, description="Last raw OpenAI response")
-    attempt: int = Field(default=1, description="Editor agent attempt")
-    max_attempts: int = Field(default=2, description="Maximum number of attempts to use editor agent")
+    attempt: int = Field(default=0, description="Editor agent attempt")
+    max_attempts: int = Field(default=3, description="Maximum number of attempts to use editor agent")
     feedback: str = Field(default=None, description="Feedback from user")
 
 class SentimentAnalysisState(BaseModel):

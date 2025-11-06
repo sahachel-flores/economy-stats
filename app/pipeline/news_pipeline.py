@@ -2,24 +2,13 @@
 from app.models.agent_context_schema import AgentContext
 from app.services.logger import agent_logger as logger
 from app.services.news_api_tools import get_news_articles_from_news_api
-from app.db.init_db import init_db
 from app.agents.selector_agent_class import SelectorAgent
 from app.agents.editor_agent_class import EditorAgent
 from app.services.db_tools import remove_all_articles_from_db, add_articles_to_db, get_all_articles_from_db
-from app.db.session import SessionLocal
 from app.services.db_tools import db_has_items
-import asyncio
-from contextlib import contextmanager
 from app.exceptions.pipeline_exceptions import FetchError, AgentExecutionError, PipelineError
+from sqlalchemy.orm import Session
 
-# DB context manager
-@contextmanager
-def db_context():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 def fetch_articles(context, db):
     """
@@ -65,7 +54,7 @@ def run_agents(context, db, selector_agent, editor_agent):
         raise Exception(f"Agent execution failed: {e}")
 
 
-def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentContext) -> None:
+def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentContext, db: Session) -> None:
     """
     Orchestrates the full news analysis pipeline:
     - Scrapes articles
@@ -76,8 +65,8 @@ def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentC
     #logger.info(f"items in db: {get_all_articles_from_db()}")
     # initializing the agent context
     context.control.topic = "US Economy"
-    context.control.from_date = "2025-09-29"
-    context.control.to_date = "2025-09-29"
+    context.control.from_date = "2025-10-29"
+    context.control.to_date = "2025-10-29"
     # initializing the agents
     selector_agent = SelectorAgent(name="Selector Agent")
     editor_agent = EditorAgent(name="Editor Agent")
@@ -85,8 +74,6 @@ def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentC
 
     # running the pipeline
     try:
-        with db_context() as db:
-            # removing all articles from the database
             remove_all_articles_from_db(db)
             # running the pipeline
             while context.should_continue():
@@ -106,4 +93,3 @@ def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentC
         logger.info("News pipeline completed successfully!")
 
 
-run_news_pipeline()
