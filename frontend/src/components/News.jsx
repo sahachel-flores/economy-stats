@@ -1,11 +1,29 @@
 import { useState, useRef, useEffect } from "react"
 
 
-const NewsCarousel = ({items = demoItems, intervalMs = 500}) => {
+const News = ({items = demoItems, intervalMs = 2000}) => {
     const [index, setIndex] = useState(0);
     const [isHovering, setIsHovering] = useState(false);
     const touchStartX = useRef(0);
     const touchDeltaX = useRef(0);
+
+    // Autoplay
+    useEffect(() => {
+        if (isHovering || items.length <= 1) return;
+        const id = setInterval(() => setIndex((i) => (i + 1) % items.length), intervalMs);
+        return () => clearInterval(id);
+    }, [isHovering, items.length, intervalMs]);
+    
+    
+    // Keyboard navigation
+    useEffect(() => {
+        const onKey = (e) => {
+            if (e.key === "ArrowRight") next();
+            if (e.key === "ArrowLeft") prev();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    });
 
     const next = () => setIndex( (i) => (i + 1) % items.length);
     const prev = () => setIndex( (i) => (i - 1 + items.length) % items.length);
@@ -56,11 +74,70 @@ const NewsCarousel = ({items = demoItems, intervalMs = 500}) => {
 
                     </div>
                 </a>
+                {/*Captions */}
+                <div className="p-4">
+                    <a href={active.href} className="block">
+                        <h3 className="text-lg md:text-xl font-semibold text-gray-900 hover:underline">
+                            {active.title}
+                        </h3>
+                    </a>
+                    <p className="mt-2 text-sm md:text-base text-gray-600 max-h-20 overflow-hidden">
+                        {active.summary}
+                    </p>
+                </div>
 
+
+
+                {/* Controls */}
+                <button
+                    onClick={prev}
+                    aria-label="Previous slide"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white shadow p-2"
+                >
+                    <ChevronLeft />
+                </button>
+                <button
+                    onClick={next}
+                    aria-label="Next slide"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white shadow p-2"
+                >
+                    <ChevronRight />
+                </button>
+
+                {/* Dots */}
+                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
+                    {items.map((_, i) => (
+                        <button
+                            key={i}
+                            onClick={() => setIndex(i)}
+                            aria-label={`Go to slide ${i + 1}`}
+                            className={
+                                "h-2 w-2 rounded-full transition-all " +
+                                (i === index ? "bg-blue-600 w-6" : "bg-gray-300 hover:bg-gray-400")
+                            }
+                        />
+                    ))}
+                </div>
             </div>
         </section>
     );
 };
+
+// Simple chevrons (no icon lib required)
+function ChevronLeft() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-700">
+        <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+    );
+}
+function ChevronRight() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-700">
+        <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+    );
+}
 
 
 // Fallback image if an image fails to load
@@ -122,4 +199,4 @@ const demoItems = [
     ];
 
 
-export default NewsCarousel;
+export default News;
