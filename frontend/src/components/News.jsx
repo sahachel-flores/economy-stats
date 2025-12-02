@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react"
+import ChevronLeft from "./ChevronLeft";
+import ChevronRight from "./ChevronRight";
 
-
-const News = ({items = demoItems, intervalMs = 2000}) => {
+const News = ({topic, items = demoItems, intervalMs = 2000}) => {
     const [index, setIndex] = useState(0);
     const [isHovering, setIsHovering] = useState(false);
     const touchStartX = useRef(0);
@@ -38,7 +39,7 @@ const News = ({items = demoItems, intervalMs = 2000}) => {
     };
     
     const onTouchEnd = (e) => {
-        const dx = touchDeltaX.current
+        const dx = e.touchDeltaX.current
         if (Math.abs(dx) > 50){
             if (dx < 0) next();
             else prev();
@@ -123,21 +124,6 @@ const News = ({items = demoItems, intervalMs = 2000}) => {
     );
 };
 
-// Simple chevrons (no icon lib required)
-function ChevronLeft() {
-    return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-700">
-        <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-    );
-}
-function ChevronRight() {
-    return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-700">
-        <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-    );
-}
 
 
 // Fallback image if an image fails to load
@@ -153,6 +139,7 @@ const placeholder =
 const demoItems = [
     {
         id: 1,
+        topic: "us economy",
         title: "US Inflation Cools in October; Markets Rally",
         summary:
             "Headline CPI eased more than expected, boosting hopes for a soft landing as equities and bonds climbed across the board.",
@@ -162,6 +149,7 @@ const demoItems = [
     },
     {
         id: 2,
+        topic: "housing",
         title: "Jobless Claims Edge Lower, Labor Market Still Tight",
         summary:
             "Initial claims ticked down, suggesting ongoing resilience even as hiring plans moderate among large employers.",
@@ -171,6 +159,7 @@ const demoItems = [
     },
     {
         id: 3,
+        topic: "stock",
         title: "Mortgage Rates Retreat, Sparking Refi Interest",
         summary:
             "Average 30-year fixed rates slipped for a third week, with lenders reporting a modest pickup in applications.",
@@ -180,6 +169,7 @@ const demoItems = [
     },
     {
         id: 4,
+        topic: "labor",
         title: "Tech Earnings Beat Sends Nasdaq Higher",
         summary:
             "Mega-cap results surprised to the upside, with cloud and AI segments leading revenue growth.",
@@ -189,6 +179,7 @@ const demoItems = [
     },
     {
         id: 5,
+        topic: "us economy",
         title: "Oil Slides on Supply Outlook, Strong Dollar",
         summary:
             "Crude prices fell as inventories rose and traders reassessed global demand into year-end.",
