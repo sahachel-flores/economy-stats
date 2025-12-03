@@ -4,7 +4,7 @@ from app.agents.agent_context_class import AgentContext
 from app.services.openai_client import ask_openai
 from app.services.logger import api_logger as logger
 from app.services.db_tools import get_articles_using_ids_from_db
-from app.db.session import SessionLocal
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.exceptions.agent_exceptions import AgentExecutionError
 
 
@@ -18,7 +18,7 @@ class SelectorAgent(BaseAgent):
         self.article_fetcher = get_articles_using_ids_from_db
         self.logger = logger
 
-    def execute(self, context: AgentContext, db: SessionLocal, *args, **kwargs) -> bool:
+    async def execute(self, context: AgentContext, db: AsyncSession, *args, **kwargs) -> bool:
         """ 
         Agent for selecting the most relevant articles.
         """
@@ -54,7 +54,7 @@ class SelectorAgent(BaseAgent):
                 context.agent_states.selector.last_response = result
                 context.agent_states.selector.history.append({'role': 'assistant', 'content': result})
                 context.article_flow.selected_articles_ids = parsed_result
-                context.article_flow.selected_articles_content = get_articles_using_ids_from_db(parsed_result, db)
+                context.article_flow.selected_articles_content = await get_articles_using_ids_from_db(parsed_result, db)
                 if not context.article_flow.selected_articles_content:
                     raise AgentExecutionError("Selector agent: Error getting the articles from the database")
                 self.logger.info(f"number of needed articles: {context.control.target_articles - len(context.article_flow.approved_articles_ids)}")

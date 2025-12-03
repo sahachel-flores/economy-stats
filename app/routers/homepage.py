@@ -19,6 +19,6 @@ db_dependancy = Annotated[AsyncSession, Depends(get_db)]
 @router.get("/")
 async def homepage(db: db_dependancy, context_dependency = Depends(get_context)):
     run_context = RunContext(context_dependency)
-    run_news_pipeline(query="economy", from_date="2025-10-01", to_date="2025-10-01", context=run_context.context, db=db)
+    await run_news_pipeline(query="economy", from_date="2025-10-01", to_date="2025-10-01", context=run_context.context, db=db)
     print(run_context.context.article_flow.approved_articles_ids)
     return run_context.context.article_flow.approved_articles_ids

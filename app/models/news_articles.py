@@ -11,7 +11,7 @@ class NewsArticles(Base):
     description: Mapped[str] = mapped_column(Text)
     url: Mapped[str] = mapped_column(String(1024))
     url_to_image: Mapped[str] = mapped_column(String(1024))
-    published_at: Mapped[str] = mapped_column(String(64))
+    published_at: Mapped[datetime] = mapped_column(DateTime)
     content: Mapped[str] = mapped_column(Text)
 
     __table_args__ = (UniqueConstraint("url", name="uq_news_url"),)

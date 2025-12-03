@@ -5,28 +5,25 @@ from app.db.init_db import init_db
 from fastapi.staticfiles import StaticFiles
 from app.agents.agent_context_class import AgentContext
 from contextlib import asynccontextmanager
+from app.services.logger import api_logger as logger
 
 @asynccontextmanager
-async def create_context(app: FastAPI):
+async def lifespan(app: FastAPI):
     """
-    This function creates the context for the application.
+    This function creates the context for the lifespan of the application. It initializes the database.
     """
     app.state.context = AgentContext()
     try:
+        await init_db()
         yield
     finally:
         pass
 
 # initialize the FastAPI app with metadata
-app = FastAPI(lifespan=create_context)
+app = FastAPI(lifespan=lifespan)
 
 # Creating static file within our directory
 app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend") 
-
-# Initialize the database
-@app.on_event("startup")
-async def on_startup():
-    await init_db()
 
 # CORS Configuration 
 app.add_middleware(

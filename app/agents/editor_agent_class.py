@@ -3,7 +3,7 @@ from app.agents.agent_context_class import AgentContext
 from app.services.openai_client import ask_openai
 from app.services.logger import agent_logger as logger
 from app.services.db_tools import get_articles_using_ids_from_db
-from app.db.session import SessionLocal
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.exceptions.agent_exceptions import AgentExecutionError
 
 class EditorAgent(BaseAgent):
@@ -16,7 +16,7 @@ class EditorAgent(BaseAgent):
         self.article_fetcher = get_articles_using_ids_from_db
         self.logger = logger
     
-    def execute(self, context: AgentContext, db: SessionLocal, *args, **kwargs) -> bool:
+    async def execute(self, context: AgentContext, db: AsyncSession, *args, **kwargs) -> bool:
         """
         Agent for editing the articles.
         """
@@ -51,7 +51,7 @@ class EditorAgent(BaseAgent):
                     
                     context.agent_states.editor.last_response = result
                     context.agent_states.editor.history.append({'role': 'assistant', 'content': result})
-                    context.article_flow.approved_articles_content.append(get_articles_using_ids_from_db(context.article_flow.approved_articles_ids, db))
+                    context.article_flow.approved_articles_content.append(await get_articles_using_ids_from_db(context.article_flow.approved_articles_ids, db))
                     return True
                 elif len(context.article_flow.approved_articles_ids) > context.control.target_articles:
                     logger.info(f"The selector agent aproved {len(context.article_flow.approved_articles_ids)}...... removing some ids")

@@ -10,12 +10,13 @@ from app.exceptions.pipeline_exceptions import FetchError, AgentExecutionError, 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-def fetch_articles(context, db):
+async def fetch_articles(context, db):
     """
     Fetches articles from the database
     """
     try:
-        if db_has_items(db, from_date=context.control.from_date):
+        if await db_has_items(db, from_date=context.control.from_date):
+            logger.info("Articles already in the database")
             return
         # getting the articles from the news api
         logger.info(f"Fetching articles from the news api...")
@@ -28,9 +29,10 @@ def fetch_articles(context, db):
         if not raw_articles:
             raise FetchError("No articles returned from the news api")
         context.article_flow.raw_articles.append(raw_articles)
+        logger.info(f"Number of articles: {len(raw_articles)}")
         # adding the articles to the database
-        add_articles_to_db(raw_articles, db)
-        articles_from_db = get_all_articles_from_db(db, from_date=context.control.from_date)
+        await add_articles_to_db(raw_articles, db)
+        articles_from_db = await get_all_articles_from_db(db, from_date=context.control.from_date)
         if not articles_from_db:
             raise FetchError("Data returned no articles after insertion")
                   
@@ -40,21 +42,21 @@ def fetch_articles(context, db):
     except Exception as e:
         raise FetchError(f"Failed fetching articles: {e}") from e
 
-def run_agents(context, db, selector_agent, editor_agent):
+async def run_agents(context, db, selector_agent, editor_agent):
     """
     Runs the selector and editor agents
     """
     try:
-        if not selector_agent.execute(context, db):
+        if not await selector_agent.execute(context, db):
             raise Exception("Selector agent failed to execute")
-        if not editor_agent.execute(context, db):
+        if not await editor_agent.execute(context, db):
             context.control.attempt += 1
 
     except Exception as e:
         raise Exception(f"Agent execution failed: {e}")
 
 
-def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentContext, db: AsyncSession) -> None:
+async def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentContext, db: AsyncSession) -> None:
     """
     Orchestrates the full news analysis pipeline:
     - Scrapes articles
@@ -65,8 +67,8 @@ def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentC
     #logger.info(f"items in db: {get_all_articles_from_db()}")
     # initializing the agent context
     context.control.topic = "US Economy"
-    context.control.from_date = "2025-10-29"
-    context.control.to_date = "2025-10-29"
+    context.control.from_date = "2025-11-29"
+    context.control.to_date = "2025-11-29"
     # initializing the agents
     selector_agent = SelectorAgent(name="Selector Agent")
     editor_agent = EditorAgent(name="Editor Agent")
@@ -74,13 +76,14 @@ def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentC
 
     # running the pipeline
     try:
-            remove_all_articles_from_db(db)
+            #remove_all_articles_from_db(db)
             # running the pipeline
             while context.should_continue():
                 # getting the articles from the news api and storing them in the database
                 try:
-                    fetch_articles(context, db)
-                    run_agents(context, db, selector_agent, editor_agent)
+                    
+                    await fetch_articles(context, db)
+                    await run_agents(context, db, selector_agent, editor_agent)
 
                 except Exception as e:
                     logger.error(f"Error while getting articles: {e}")

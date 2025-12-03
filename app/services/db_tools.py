@@ -1,8 +1,10 @@
+from logging import Logger
 from sqlalchemy.ext.asyncio.session import AsyncSession
-from app.models.db_model import NewsArticles
+from app.models.news_articles import NewsArticles
 from sqlalchemy import text
 from app.services.logger import api_logger as logger
 from sqlalchemy import select, delete
+from datetime import datetime
 
 async def add_articles_to_db(articles: list[dict], db: AsyncSession) -> bool:
     """
@@ -11,21 +13,31 @@ async def add_articles_to_db(articles: list[dict], db: AsyncSession) -> bool:
     try:
         async with db.begin():
             for article in articles:
-                # Create article object with proper field mapping
-                article_db = NewsArticles(
-                    author=article["author"],
-                    title=article["title"],
-                    description=article["description"],
-                    url=article["url"],
-                    url_to_image=article["urlToImage"],
-                    published_at=article["publishedAt"],
-                    content=article["content"],
-                )
+                try:
+                    required_fields = ["author", "title", "description", "url", "urlToImage", "publishedAt", "content"]
+                    if not all(article.get(field) for field in required_fields):
+                        logger.warning(f"Skipping article due to missing fields: {article.get('title', 'No Title')}")
+                        continue
+                    # Create article object with proper field mapping
+                    published_at_dt = datetime.fromisoformat(article["publishedAt"].replace("Z", "+00:00"))
+                    article_db = NewsArticles(
+                        author=article["author"],
+                        title=article["title"],
+                        description=article["description"],
+                        url=article["url"],
+                        url_to_image=article["urlToImage"],
+                        published_at=published_at_dt,
+                        content=article["content"],
+                    )
+                except Exception as e:
+                    logger.warning(f"Skipping article due to parsing error: {e}")
+                    continue
 
-            # Add the article to the database
-            db.add(article_db)
-        await db.commit()
-        return True
+                # Add the article to the database
+                db.add(article_db)
+                
+            await db.commit()
+            return True
     except Exception as e:
         logger.error(f"DB Error occured when adding article to the database: {e}")
         return False
@@ -110,9 +122,10 @@ async def db_has_items(db: AsyncSession, from_date:str = None) -> bool:
     try:
         stmt = select(NewsArticles)
         if from_date:
-            stmt = stmt.filter(NewsArticles.published_at >= from_date)
+            parsed_from_date = datetime.fromisoformat(from_date)
+            stmt = stmt.filter(NewsArticles.published_at >= parsed_from_date)
         result = await db.execute(stmt)
-        return result.scalars().count() > 0
+        return True if result.scalars().all() else False
     except Exception as e:
         logger.error(f"Error checking if the database has items: {e}")
         return False
@@ -127,6 +140,7 @@ async def remove_all_articles_from_db(db: AsyncSession) -> bool:
         stmt = delete(NewsArticles)
         await db.execute(stmt)
         await db.commit()
+        logger.info("All articles removed from the database")
         return True
     except Exception as e:
         logger.error(f"Error removing all articles from the database: {e}")
