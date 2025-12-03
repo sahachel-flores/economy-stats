@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from "react"
-import ChevronLeft from "./ChevronLeft";
-import ChevronRight from "./ChevronRight";
+
+import SlideImage from "./SlidesImage";
+import Captions from "./Captions";
+import Control from "./Control";
+import Dots from "./Dots";
 
 const News = ({topic, items = demoItems, intervalMs = 2000}) => {
-    const [index, setIndex] = useState(0);
     const [isHovering, setIsHovering] = useState(false);
+    const [index, setIndex] = useState(0);
     const touchStartX = useRef(0);
     const touchDeltaX = useRef(0);
 
@@ -47,78 +50,23 @@ const News = ({topic, items = demoItems, intervalMs = 2000}) => {
     };
 
     const active = items[index]
-
     return(
         <section
             className="w-full max-w-5xl mx-auto m-6 select-none"
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
         >
-            {/*Frame */}
-            <div 
-                className="relative overflow-hidden round-2xl shadow bg-white"
-                onTouchStart={onTouchStart}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onTouchEnd}
+             <div 
+            className="relative overflow-hidden round-2xl shadow bg-white"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
             >
-                {/*slide images*/}
-                <a href={active.href} className="block" aria-label={active.title}>
-                    <div className="w-full aspect-video bg-gray-100">
-                        {/*Loading images */}
-                        <img 
-                            src={active.imageUrl}
-                            alt={active.title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            onError={(e) => {e.currentTarget.src = placeholder}}
-                        />
-
-                    </div>
-                </a>
-                {/*Captions */}
-                <div className="p-4">
-                    <a href={active.href} className="block">
-                        <h3 className="text-lg md:text-xl font-semibold text-gray-900 hover:underline">
-                            {active.title}
-                        </h3>
-                    </a>
-                    <p className="mt-2 text-sm md:text-base text-gray-600 max-h-20 overflow-hidden">
-                        {active.summary}
-                    </p>
-                </div>
-
-
-
-                {/* Controls */}
-                <button
-                    onClick={prev}
-                    aria-label="Previous slide"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white shadow p-2"
-                >
-                    <ChevronLeft />
-                </button>
-                <button
-                    onClick={next}
-                    aria-label="Next slide"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white shadow p-2"
-                >
-                    <ChevronRight />
-                </button>
-
-                {/* Dots */}
-                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
-                    {items.map((_, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setIndex(i)}
-                            aria-label={`Go to slide ${i + 1}`}
-                            className={
-                                "h-2 w-2 rounded-full transition-all " +
-                                (i === index ? "bg-blue-600 w-6" : "bg-gray-300 hover:bg-gray-400")
-                            }
-                        />
-                    ))}
-                </div>
+                <h1 className="text-2xl font-bold text-center mb-4">{topic}</h1>
+                <SlideImage active={active} placeholder={placeholder} />
+                <Captions active={active} />
+                <Control prev={prev} next={next} />
+                <Dots index={index} items={items} setIndex={setIndex} />
             </div>
         </section>
     );
