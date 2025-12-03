@@ -1,5 +1,5 @@
 # app/core/run_context.py
-from app.models.agent_context_schema import AgentContext
+from app.agents.agent_context_class import AgentContext
 
 
 class RunContext:

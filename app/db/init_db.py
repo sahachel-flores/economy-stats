@@ -1,6 +1,6 @@
-# app/db/init_db.py
-from app.db.session import Base, engine
-from app.models.db_schema import NewsArticles
+from app.db.session import engine, Base
 
-def init_db():
-    Base.metadata.create_all(bind=engine)
+# function to initialize the asyncdatabase
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import news, homepage  # routers imports 
 from app.db.init_db import init_db
 from fastapi.staticfiles import StaticFiles
-from app.models.agent_context_schema import AgentContext
+from app.agents.agent_context_class import AgentContext
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
@@ -23,9 +23,10 @@ app = FastAPI(lifespan=create_context)
 # Creating static file within our directory
 app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend") 
 
-
 # Initialize the database
-init_db()
+@app.lifespan("startup")
+async def on_startup():
+    await init_db()
 
 # CORS Configuration 
 app.add_middleware(

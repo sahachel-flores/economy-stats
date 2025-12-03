@@ -1,27 +1,26 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker  # (+ AsyncSession if needed)
 from sqlalchemy.ext.declarative import declarative_base
-from app.services.logger import api_logger as logger
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 load_dotenv()
 
 SQLALCHEMY_DATABASE_URL = os.getenv("SQLALCHEMY_DATABASE_URL")
 
-# Creating our enginer, needs database path, connect_args allows to define some kind of connection to a database.
-# We have false for check_same_thread to prevent accident sharing of the same connection
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={'check_same_thread': False})
+# Create an async engine (PostgreSQL with asyncpg, or SQLite with aiosqlite)
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=False)
 
-# The sessionLocal is an instance of the database 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Async session factory
+SessionLocal = async_sessionmaker[AsyncSession](bind=engine, autoflush=False, expire_on_commit=False)
 
-# Creating database object we can interact with
+# Base class for models (same as before)
 Base = declarative_base()
 
-# FastAPI dependency to get the database session. Do not use this function directly if you are not using FastAPI, use SessionLocal instead.
-def get_db():
-    db = SessionLocal()
+# Dependency for FastAPI to get a session
+async def get_db():
+    db = SessionLocal()  # this gives an AsyncSession
     try:
         yield db
     finally:
-        db.close()
+        # Close the session after use
+        await db.close()

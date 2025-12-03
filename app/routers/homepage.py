@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Request 
+from fastapi import APIRouter, Depends, Request 
 from app.pipeline.news_pipeline import run_news_pipeline
-from app.core.dependecies import get_context
+from app.core.dependencies import get_context
 from app.core.run_context import RunContext
-from app.db.session import SessionLocal
-from sqlalchemy.orm import Session
+from app.db.session import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
 
 router = APIRouter(
@@ -12,15 +12,8 @@ router = APIRouter(
 )
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
-
-db_dependancy = Annotated[Session, Depends(get_db)]
+db_dependancy = Annotated[AsyncSession, Depends(get_db)]
 
 
 @router.get("/{category}")
