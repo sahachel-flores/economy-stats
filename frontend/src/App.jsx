@@ -1,15 +1,16 @@
 import Header from "./components/Header"
-import News from "./components/News";
+import NewsCarousel from "./components/NewsCarousel";
 const App = () => {
   console.log("here");
   const topics = ['us economy', 'housing', 'stock', 'labor']
+  
   
   return (
     <div>
       <Header />
       <h1>News</h1>
       {topics.map( (topic) => (
-        <News topic={topic}/>
+        <NewsCarousel topic={topic}/>
       ))}
     </div>
   );

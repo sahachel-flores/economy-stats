@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 
 import SlideImage from "./SlidesImage";
 import Captions from "./Captions";
 import Control from "./Control";
 import Dots from "./Dots";
 
-const News = ({topic, items = demoItems, intervalMs = 2000}) => {
+const NewsCarousel = ({items = demoItems, intervalMs = 2000}) => {
     const [isHovering, setIsHovering] = useState(false);
     const [index, setIndex] = useState(0);
     const touchStartX = useRef(0);
@@ -18,6 +18,14 @@ const News = ({topic, items = demoItems, intervalMs = 2000}) => {
         return () => clearInterval(id);
     }, [isHovering, items.length, intervalMs]);
     
+    // Using useCallback to prevent unnecessary re-renders
+    const next = useCallback(() => {
+        setIndex((i) => (i + 1) % items.length);
+      }, [items.length]);
+      
+    const prev = useCallback(() => {
+        setIndex((i) => (i - 1 + items.length) % items.length);
+      }, [items.length]);
     
     // Keyboard navigation
     useEffect(() => {
@@ -27,10 +35,9 @@ const News = ({topic, items = demoItems, intervalMs = 2000}) => {
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
-    });
+    }, [next, prev]);
 
-    const next = () => setIndex( (i) => (i + 1) % items.length);
-    const prev = () => setIndex( (i) => (i - 1 + items.length) % items.length);
+
 
     const onTouchStart = (e) => {
         touchStartX.current = e.touches[0].clientX;
@@ -41,8 +48,8 @@ const News = ({topic, items = demoItems, intervalMs = 2000}) => {
         touchDeltaX.current = e.touches[0].clientX - touchStartX.current
     };
     
-    const onTouchEnd = (e) => {
-        const dx = e.touchDeltaX.current
+    const onTouchEnd = () => {
+        const dx = touchDeltaX.current
         if (Math.abs(dx) > 50){
             if (dx < 0) next();
             else prev();
@@ -62,7 +69,6 @@ const News = ({topic, items = demoItems, intervalMs = 2000}) => {
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
             >
-                <h1 className="text-2xl font-bold text-center mb-4">{topic}</h1>
                 <SlideImage active={active} placeholder={placeholder} />
                 <Captions active={active} />
                 <Control prev={prev} next={next} />
@@ -138,4 +144,4 @@ const demoItems = [
     ];
 
 
-export default News;
+export default NewsCarousel;

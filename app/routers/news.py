@@ -23,6 +23,7 @@ async def get_news(request: Request):
 
 @router.get("/{category}")
 async def get_news(category: str):
+    CATEGORIES = ['us economy', 'housing', 'stock', 'labor']
     if category not in CATEGORIES:
         raise HTTPException(status_code=404, detail="Category not found")
 
