@@ -2,7 +2,7 @@
 from dotenv import load_dotenv
 from app.services.logger import agent_logger as logger
 from openai import OpenAI
-from app.models.agent_context_schema import AgentContext
+from app.agents.agent_context_class import AgentContext
 
 load_dotenv()
 MODEL = 'gpt-4o-mini'

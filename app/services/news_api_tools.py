@@ -2,7 +2,7 @@ from app.services.logger import api_logger as logger
 from newsapi import NewsApiClient
 from dotenv import load_dotenv
 import newspaper
-from app.models.agent_context_schema import AgentContext
+from app.agents.agent_context_class import AgentContext
 import os
 load_dotenv()
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")

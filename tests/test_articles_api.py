@@ -1,10 +1,10 @@
 # test/test_scraper.py
 from app.services.logger import api_logger as logger
 from app.services.news_api_tools import get_news_articles_from_news_api
-from app.models.agent_context_schema import AgentContext
+from app.agents.agent_context_class import AgentContext
 from app.services.news_api_tools import get_article_text
 from app.services.db_tools import add_articles_to_db
-from app.models.db_schema import NewsArticles
+from app.schemas.news_schema import NewsArticles
 
 def test_get_news_articles_from_news_api():
     """

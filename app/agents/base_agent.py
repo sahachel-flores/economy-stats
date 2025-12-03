@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from app.models.agent_context_schema import AgentContext
+from app.agents.agent_context_class import AgentContext
 from app.services.logger import agent_logger as logger
 import re
 import ast

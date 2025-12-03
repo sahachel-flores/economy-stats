@@ -1,5 +1,6 @@
 from app.services.db_tools import *
-from app.models.db_schema import NewsArticles
+from app.schemas.news_schema import NewsArticles
+
 
 def create_test_data():
     test_articles = [{

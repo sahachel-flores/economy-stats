@@ -1,5 +1,5 @@
 # run: python3 app/pipeline/news_pipeline.py
-from app.models.agent_context_schema import AgentContext
+from app.agents.agent_context_class import AgentContext
 from app.services.logger import agent_logger as logger
 from app.services.news_api_tools import get_news_articles_from_news_api
 from app.agents.selector_agent_class import SelectorAgent
@@ -7,7 +7,7 @@ from app.agents.editor_agent_class import EditorAgent
 from app.services.db_tools import remove_all_articles_from_db, add_articles_to_db, get_all_articles_from_db
 from app.services.db_tools import db_has_items
 from app.exceptions.pipeline_exceptions import FetchError, AgentExecutionError, PipelineError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def fetch_articles(context, db):
@@ -54,7 +54,7 @@ def run_agents(context, db, selector_agent, editor_agent):
         raise Exception(f"Agent execution failed: {e}")
 
 
-def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentContext, db: Session) -> None:
+def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentContext, db: AsyncSession) -> None:
     """
     Orchestrates the full news analysis pipeline:
     - Scrapes articles
@@ -91,5 +91,4 @@ def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentC
         raise Exception(f"Fatal error in the news pipeline: {e}")
     else:
         logger.info("News pipeline completed successfully!")
-
 

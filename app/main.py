@@ -24,7 +24,7 @@ app = FastAPI(lifespan=create_context)
 app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend") 
 
 # Initialize the database
-@app.lifespan("startup")
+@app.on_event("startup")
 async def on_startup():
     await init_db()
 
