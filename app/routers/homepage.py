@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request 
+from fastapi import APIRouter, Depends, Query
 from app.pipeline.news_pipeline import run_news_pipeline
 from app.core.dependencies import get_context
 from app.core.run_context import RunContext
@@ -6,6 +6,8 @@ from app.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
 from app.agents.agent_context_class import AgentContext
+from datetime import date
+from app.schemas.news import NewsRequest
 
 router = APIRouter(
     prefix='/homepage',
@@ -13,13 +15,17 @@ router = APIRouter(
 )
 
 # Dependencies injections
-db_dependancy = Annotated[AsyncSession, Depends(get_db)]
-agent_context_dependancy = Annotated[AgentContext, Depends(get_context)]
+db_dependency = Annotated[AsyncSession, Depends(get_db)]
+agent_context_dependency = Annotated[AgentContext, Depends(get_context)]
 
 
-@router.get("/")
-async def homepage(db: db_dependancy, context: agent_context_dependancy):
+@router.post("/")
+async def homepage(
+    request: NewsRequest,
+    db: db_dependency, 
+    context: agent_context_dependency):
+    
     run_context = RunContext(context)
-    await run_news_pipeline(query="economy", from_date="2025-10-01", to_date="2025-10-01", context=run_context.context, db=db)
+    await run_news_pipeline(topic=request.topic, from_date=request.from_date, to_date=request.to_date, context=run_context.context, db=db)
     print(run_context.context.article_flow.approved_articles_ids)
     return run_context.context.article_flow.approved_articles_content
