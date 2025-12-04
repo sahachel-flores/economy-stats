@@ -16,7 +16,8 @@ async def fetch_articles(context, db):
     """
     try:
         if await db_has_items(db, from_date=context.control.from_date):
-            logger.info("Articles already in the database")
+            context.article_flow.articles_from_db = await get_all_articles_from_db(db, from_date=context.control.from_date)
+            logger.info(f"Articles already in the database: {len(context.article_flow.articles_from_db)}")
             return
         # getting the articles from the news api
         logger.info(f"Fetching articles from the news api...")
@@ -37,7 +38,7 @@ async def fetch_articles(context, db):
             raise FetchError("Data returned no articles after insertion")
                   
         # adding the articles to the context
-        context.article_flow.articles_from_db.extend(articles_from_db)
+        context.article_flow.articles_from_db.append(articles_from_db)
         logger.info(f"Number of articles: {len(context.article_flow.articles_from_db)}\n\n")
     except Exception as e:
         raise FetchError(f"Failed fetching articles: {e}") from e
@@ -56,7 +57,7 @@ async def run_agents(context, db, selector_agent, editor_agent):
         raise Exception(f"Agent execution failed: {e}")
 
 
-async def run_news_pipeline( query: str, from_date: str, to_date: str, context: AgentContext, db: AsyncSession) -> None:
+async def run_news_pipeline( topic: str, from_date: str, to_date: str, context: AgentContext, db: AsyncSession) -> None:
     """
     Orchestrates the full news analysis pipeline:
     - Scrapes articles
@@ -66,9 +67,9 @@ async def run_news_pipeline( query: str, from_date: str, to_date: str, context: 
     logger.info("Running news pipeline...")
     #logger.info(f"items in db: {get_all_articles_from_db()}")
     # initializing the agent context
-    context.control.topic = "US Economy"
-    context.control.from_date = "2025-11-29"
-    context.control.to_date = "2025-11-29"
+    context.control.topic = topic
+    context.control.from_date = from_date
+    context.control.to_date = to_date
     # initializing the agents
     selector_agent = SelectorAgent(name="Selector Agent")
     editor_agent = EditorAgent(name="Editor Agent")

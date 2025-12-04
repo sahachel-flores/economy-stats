@@ -29,6 +29,7 @@ class SelectorAgent(BaseAgent):
                     self.logger.info(f"---------->Executing selector agent... Attempt {context.control.attempt} target articles: {context.control.target_articles}")
                     # Generating the input message
                     prompt = self.generate_input_message(context)
+                    #self.logger.info(f"Selector agent: prompt: {prompt}")
                     if not prompt:
                         raise AgentExecutionError("Selector agent: Error generating input message")
 
@@ -42,6 +43,7 @@ class SelectorAgent(BaseAgent):
                     context.agent_states.selector.history.append(system_message)
                 # Asking the openai model for the response
                 result = self.llm_client(context.agent_states.selector.history)
+                self.logger.info(f"Selector agent: result: {result}")
                 if not result:
                     raise AgentExecutionError("Selector agent: Error ask_openai function failed to return a result")
 
@@ -114,7 +116,7 @@ class SelectorAgent(BaseAgent):
             
 
             List of news articles:\n
-            {context.article_flow.raw_articles}
+            {context.article_flow.articles_from_db}
             """
         elif context.agent_states.selector.attempt > 1 and context.agent_states.selector.feedback:
             message = f"""

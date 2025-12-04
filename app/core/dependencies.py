@@ -1,4 +1,4 @@
-from fastapi import Request
+from app.agents.agent_context_class import AgentContext
 
-def get_context(request: Request):
-    return request.app.state.context
+def get_context() -> AgentContext:
+    return AgentContext()

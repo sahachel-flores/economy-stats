@@ -51,7 +51,7 @@ class EditorAgent(BaseAgent):
                     
                     context.agent_states.editor.last_response = result
                     context.agent_states.editor.history.append({'role': 'assistant', 'content': result})
-                    context.article_flow.approved_articles_content.append(await get_articles_using_ids_from_db(context.article_flow.approved_articles_ids, db))
+                    context.article_flow.approved_articles_content = await get_articles_using_ids_from_db(context.article_flow.approved_articles_ids, db)
                     return True
                 elif len(context.article_flow.approved_articles_ids) > context.control.target_articles:
                     logger.info(f"The selector agent aproved {len(context.article_flow.approved_articles_ids)}...... removing some ids")

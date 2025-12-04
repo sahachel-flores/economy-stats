@@ -12,7 +12,6 @@ async def lifespan(app: FastAPI):
     """
     This function creates the context for the lifespan of the application. It initializes the database.
     """
-    app.state.context = AgentContext()
     try:
         await init_db()
         yield
