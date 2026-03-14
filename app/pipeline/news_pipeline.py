@@ -30,16 +30,16 @@ async def fetch_articles(context, db):
         if not raw_articles:
             raise FetchError("No articles returned from the news api")
         context.article_flow.raw_articles.append(raw_articles)
-        logger.info(f"Number of articles: {len(raw_articles)}")
+        logger.info(f"Number of raw articles: {len(raw_articles)}")
         # adding the articles to the database
         await add_articles_to_db(raw_articles, db)
         articles_from_db = await get_all_articles_from_db(db, from_date=context.control.from_date)
         if not articles_from_db:
-            raise FetchError("Data returned no articles after insertion")
+            raise FetchError("Database returned no articles after insertion")
                   
         # adding the articles to the context
         context.article_flow.articles_from_db.append(articles_from_db)
-        logger.info(f"Number of articles: {len(context.article_flow.articles_from_db)}\n\n")
+        logger.info(f"Number of articles in the database: {len(context.article_flow.articles_from_db)}\n\n")
     except Exception as e:
         raise FetchError(f"Failed fetching articles: {e}") from e
 
@@ -95,4 +95,3 @@ async def run_news_pipeline( topic: str, from_date: str, to_date: str, context: 
         raise Exception(f"Fatal error in the news pipeline: {e}")
     else:
         logger.info("News pipeline completed successfully!")
-

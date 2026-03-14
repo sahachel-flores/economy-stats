@@ -6,20 +6,22 @@ from app.services.logger import api_logger as logger
 from sqlalchemy import select, delete
 from datetime import datetime
 
-async def add_articles_to_db(articles: list[dict], db: AsyncSession) -> bool:
+async def add_articles_to_db(articles: list[dict], db: AsyncSession) -> None:
     """
     This function adds an article to the database.
     """
     try:
+        required_fields = ["author", "title", "description", "url", "urlToImage", "publishedAt", "content"]
         async with db.begin():
             for article in articles:
+                
+                if not all(article.get(field) for field in required_fields):
+                    logger.warning(f"Skipping article due to missing fields")
+                    continue
                 try:
-                    required_fields = ["author", "title", "description", "url", "urlToImage", "publishedAt", "content"]
-                    if not all(article.get(field) for field in required_fields):
-                        logger.warning(f"Skipping article due to missing fields: {article.get('title', 'No Title')}")
-                        continue
                     # Create article object with proper field mapping
                     published_at_dt = datetime.fromisoformat(article["publishedAt"].replace("Z", "+00:00"))
+                
                     article_db = NewsArticles(
                         author=article["author"],
                         title=article["title"],
@@ -29,20 +31,25 @@ async def add_articles_to_db(articles: list[dict], db: AsyncSession) -> bool:
                         published_at=published_at_dt,
                         content=article["content"],
                     )
-                except Exception as e:
-                    logger.warning(f"Skipping article due to parsing error: {e}")
+                except Exception:
+                    logger.warning("Skipping article due to invalid publishedAt")
+                    continue
+                    
+                stmt = select(NewsArticles.id).where(NewsArticles.url == article['url'])
+                result = await db.execute(stmt)
+                
+                # Check to avoid adding duplicate articles 
+                if result.scalar_one_or_none():
+                    logger.warning(f"skipping duplicate article url {article['url']}")
                     continue
 
                 # Add the article to the database
                 db.add(article_db)
-                
-            await db.commit()
-            return True
+            
     except Exception as e:
-        logger.error(f"DB Error occured when adding article to the database: {e}")
-        return False
-    finally:
         await db.rollback()
+        logger.error(f"Here DB Error occured when adding article to the database: {e}")
+        
 
    
 async def get_all_articles_from_db(db: AsyncSession, from_date:str = None) -> list[dict]:
@@ -77,10 +84,10 @@ async def get_all_articles_from_db(db: AsyncSession, from_date:str = None) -> li
         
         return return_articles
     except Exception as e:
+        await db.rollback()
         logger.error(f"Error getting articles from db: {e}")
         return []
-    finally:
-        await db.rollback()
+       
 
 async def get_articles_using_ids_from_db(ids: list[int], db: AsyncSession) -> list[dict]:
     """
@@ -110,10 +117,10 @@ async def get_articles_using_ids_from_db(ids: list[int], db: AsyncSession) -> li
         return return_articles
 
     except Exception as e:
+        await db.rollback()
         logger.error(f"Error getting articles from ids: {e}")
         return []
-    finally:
-        await db.rollback()
+        
 
 async def db_has_items(db: AsyncSession, from_date:str = None) -> bool:
     """
@@ -127,10 +134,10 @@ async def db_has_items(db: AsyncSession, from_date:str = None) -> bool:
         result = await db.execute(stmt)
         return True if result.scalars().all() else False
     except Exception as e:
+        await db.rollback()
         logger.error(f"Error checking if the database has items: {e}")
         return False
-    finally:
-        await db.rollback()
+        
 
 async def remove_all_articles_from_db(db: AsyncSession) -> bool:
     """
@@ -143,10 +150,10 @@ async def remove_all_articles_from_db(db: AsyncSession) -> bool:
         logger.info("All articles removed from the database")
         return True
     except Exception as e:
+        await db.rollback()
         logger.error(f"Error removing all articles from the database: {e}")
         return False
-    finally:
-        await db.rollback()
+        
 
 
 

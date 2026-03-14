@@ -7,6 +7,12 @@ from app.agents.agent_context_class import AgentContext
 from contextlib import asynccontextmanager
 from app.services.logger import api_logger as logger
 
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend" / "dist"
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -21,8 +27,6 @@ async def lifespan(app: FastAPI):
 # initialize the FastAPI app with metadata
 app = FastAPI(lifespan=lifespan)
 
-# Creating static file within our directory
-app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend") 
 
 # CORS Configuration 
 app.add_middleware(
@@ -33,12 +37,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def root():
-    return {"message": "Hello to Economy Stats AI"}
-
 ## API endpoints
 app.include_router(homepage.router)
 #app.include_router(news.router)
 
 
+# Creating static file within our directory
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
