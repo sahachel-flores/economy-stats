@@ -29,7 +29,10 @@ class SelectorAgent(BaseAgent):
                     self.logger.info(f"---------->Executing selector agent... Attempt {context.control.attempt} target articles: {context.control.target_articles}")
                     # Generating the input message
                     prompt = self.generate_input_message(context)
-                    #self.logger.info(f"Selector agent: prompt: {prompt}")
+                    
+                    # uncomment if you want to see prompt 
+                    # self.logger.info(f"Selector agent: prompt: {prompt}")
+                    
                     if not prompt:
                         raise AgentExecutionError("Selector agent: Error generating input message")
 

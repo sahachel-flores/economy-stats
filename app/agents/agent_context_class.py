@@ -2,6 +2,8 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 
+from app.schemas.news import NewsArticleResponse
+
 
 
 class PipelineControl(BaseModel):
@@ -16,13 +18,14 @@ class PipelineControl(BaseModel):
     from_date: str = Field(default="2025-06-17", description="Article date range start")
     to_date: str = Field(default="2025-06-17", description="Article date range end")
     max_tokens: int = Field(default=128000, description="Maximum number of tokens for the pipeline")
+    min_articles_fetch: int = Field(default=10, description="The minimum number of articles that API must fetch to run pipeline")
 
 class ArticleFlow(BaseModel):
     """
     Articles at different stages of the pipeline
     """
-    raw_articles: List[dict] = Field(default_factory=list, description="Original articles from News API")
-    articles_from_db: List[dict] = Field(default_factory=list, description="Articles from the database")
+    raw_articles: List[NewsArticleResponse] = Field(default_factory=list, description="Original articles from News API")
+    articles_from_db: List[NewsArticleResponse] = Field(default_factory=list, description="Articles from the database")
     selected_articles_ids: List[int] = Field(default_factory=list, description="IDs selected by selector agent")
     selected_articles_content: List[dict] = Field(default_factory=list, description="Full content of selected articles")
     approved_articles_ids: List[int] = Field(default_factory=list, description="IDs approved by editor agent")
