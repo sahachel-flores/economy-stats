@@ -30,9 +30,9 @@ async def homepage(
     context_dep: agent_context_dependency):
     
     context = RunContext(context_dep)
-    context.context.control.topic = request.topic
-    context.context.control.from_date = request.from_date
-    context.context.control.to_date = request.to_date
+    context.context.input.topic = request.topic
+    context.context.input.from_date = request.from_date
+    context.context.input.to_date = request.to_date
 
     #logger.info(f"topic: {context.context.control.topic} from_date: {context.context.control.from_date} to_date: {context.context.control.to_date}")
 
@@ -43,7 +43,7 @@ async def homepage(
         )
     
     # Getting articles from db
-    articles = await get_all_articles_from_db(db, context.context.control.from_date)
+    articles = await get_all_articles_from_db(db, context.context.input.from_date)
     context.context.article_flow.articles_from_db = serialize_articles(articles)
 
     await run_news_pipeline(

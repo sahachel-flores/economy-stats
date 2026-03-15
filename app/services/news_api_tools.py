@@ -30,9 +30,9 @@ def get_news_articles_from_news_api(query:str, from_date:str, to_date:str, conte
                                     page_size=30
                                     )
         num_fetched_articles = len(all_articles["articles"])
-        if num_fetched_articles < context.control.min_articles_fetch:
+        if num_fetched_articles < context.config.min_articles_fetch:
             logger.info(f"The number of articles fetched by News API is less than the minimum number of articles required.")
-            raise Exception(f"Number of fetched news articles is {num_fetched_articles} which less than the minumum required ({context.control.min_articles_fetch})")
+            raise Exception(f"Number of fetched news articles is {num_fetched_articles} which less than the minumum required ({context.config.min_articles_fetch})")
         
         context.article_flow.raw_articles.append(all_articles["articles"])
         logger.info(f"Number of raw articles: {len(all_articles["articles"])}")

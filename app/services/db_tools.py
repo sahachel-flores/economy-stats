@@ -146,9 +146,9 @@ async def ingest_api_news_to_db(db: AsyncSession, context: AgentContext) -> None
     This function fetches the news_api and stores the result in the database.
     """
     articles = get_news_articles_from_news_api(
-        query=context.control.topic,
-        from_date=context.control.from_date,
-        to_date=context.control.to_date,
+        query=context.input.topic,
+        from_date=context.input.from_date,
+        to_date=context.input.to_date,
         context=context,
     )
 

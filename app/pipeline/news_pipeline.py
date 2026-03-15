@@ -67,7 +67,7 @@ async def run_news_pipeline(context: AgentContext, db: AsyncSession, articles: l
             if not await selector_agent.execute(context, db):
                 raise Exception("Selector agent failed to execute")
             if not await editor_agent.execute(context, db):
-                context.control.attempt += 1
+                context.execution.attempt += 1
 
 
     except Exception as e:

@@ -1,24 +1,24 @@
 # app/models/agent_context_schema.py
+from PIL.ExifTags import Base
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
-
 from app.schemas.news import NewsArticleResponse
 
 
-
-class PipelineControl(BaseModel):
-    """
-    Read-only configuration data that agents use for coordination
-    """
-    attempt: int = Field(default=1, description="Current pipeline attempt")
-    max_attempts: int = Field(default=4, description="Maximum retry attempts")
+class PipelineInput(BaseModel):
     topic: str = Field(default="US Economy", description="News topic to focus on")
-    target_articles: int = Field(default=5, description="Target number of approved articles")
-    obtained_articles_from_news_api: int = Field(default=0, description="Number of articles obtained from News API")
     from_date: str = Field(default="2025-06-17", description="Article date range start")
     to_date: str = Field(default="2025-06-17", description="Article date range end")
-    max_tokens: int = Field(default=128000, description="Maximum number of tokens for the pipeline")
+
+class PipelineConfig(BaseModel):
+    max_attempts: int = Field(default=4, description="Maximum retry attempts")
+    target_articles: int = Field(default=5, description="Target number of approved articles")
+    max_tokens: int = Field(default=128000, description="Maximum number of tokens for the pipeline") #not used
     min_articles_fetch: int = Field(default=10, description="The minimum number of articles that API must fetch to run pipeline")
+
+class PipelineExecution(BaseModel):
+    attempt: int = Field(default=1, description="Current pipeline attempt")
+    num_articles_from_news_api: int = Field(default=0, description="Number of articles obtained from News API") #not used
 
 class ArticleFlow(BaseModel):
     """
@@ -79,7 +79,9 @@ class AgentContext(BaseModel):
     """
     This class is used to keep track of state and history of the agents.
     """
-    control: PipelineControl = Field(default_factory=PipelineControl)
+    input: PipelineInput = Field(default_factory=PipelineInput)
+    config: PipelineConfig = Field(default_factory=PipelineConfig)
+    execution: PipelineExecution = Field(default_factory=PipelineExecution)
     article_flow: ArticleFlow = Field(default_factory=ArticleFlow)
     agent_states: AgentStates = Field(default_factory=AgentStates)
     results: PipelineResults = Field(default_factory=PipelineResults)
@@ -88,4 +90,4 @@ class AgentContext(BaseModel):
         """
         Check if the pipeline should continue.
         """
-        return self.control.attempt <= self.control.max_attempts and len(self.article_flow.approved_articles_ids) < self.control.target_articles
+        return self.execution.attempt <= self.config.max_attempts and len(self.article_flow.approved_articles_ids) < self.config.target_articles

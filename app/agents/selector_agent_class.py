@@ -26,7 +26,7 @@ class SelectorAgent(BaseAgent):
             context.agent_states.selector.attempt = 1
             while context.agent_states.selector.attempt <= context.agent_states.selector.max_attempts:
                 if not context.agent_states.selector.feedback:
-                    self.logger.info(f"---------->Executing selector agent... Attempt {context.control.attempt} target articles: {context.control.target_articles}")
+                    self.logger.info(f"---------->Executing selector agent... Attempt {context.execution.attempt} target articles: {context.config.target_articles}")
                     # Generating the input message
                     prompt = self.generate_input_message(context)
                     
@@ -62,14 +62,14 @@ class SelectorAgent(BaseAgent):
                 context.article_flow.selected_articles_content = await get_articles_using_ids_from_db(parsed_result, db)
                 if not context.article_flow.selected_articles_content:
                     raise AgentExecutionError("Selector agent: Error getting the articles from the database")
-                self.logger.info(f"number of needed articles: {context.control.target_articles - len(context.article_flow.approved_articles_ids)}")
+                self.logger.info(f"number of needed articles: {context.config.target_articles - len(context.article_flow.approved_articles_ids)}")
                 # Handling the llm response where the number of selected articles is =, <, or > than the target articles
-                if len(context.article_flow.selected_articles_ids) == context.control.target_articles :
+                if len(context.article_flow.selected_articles_ids) == context.config.target_articles :
                     # Cleaning the feedback if it exists
                     if context.agent_states.selector.feedback:
                         context.agent_states.selector.feedback = None
                     return True
-                elif len(context.article_flow.selected_articles_ids) < context.control.target_articles   :
+                elif len(context.article_flow.selected_articles_ids) < context.config.target_articles   :
                     self.logger.info(f"Selector agent: number of selected articles is less than the target articles")
                     context.agent_states.selector.feedback = "the number of selected articles is less than the target articles, read instructions again and retry again."
                     #return False
@@ -92,9 +92,9 @@ class SelectorAgent(BaseAgent):
         Generate the input message for the selector agent.
         """
         message = ""
-        if context.control.attempt == 1 and context.agent_states.selector.attempt == 1:
+        if context.execution.attempt == 1 and context.agent_states.selector.attempt == 1:
             message = f"""
-            You are an expert news analyst. Select the {context.control.target_articles} most relevant articles about {context.control.topic}.
+            You are an expert news analyst. Select the {context.config.target_articles} most relevant articles about {context.input.topic}.
             You will be given a list of objects which contains information about the news articles in the following structure:
             {{
                 "id": The id of the article,
@@ -112,8 +112,8 @@ class SelectorAgent(BaseAgent):
             Instructions:
             1. Analyze the title and content of each article
             2. Skip articles with missing content fields.
-            3. Select the {context.control.target_articles} most relevant articles.
-            4. If fewer than {context.control.target_articles} qualify, select as many as possible
+            3. Select the {context.config.target_articles} most relevant articles.
+            4. If fewer than {context.config.target_articles} qualify, select as many as possible
             5. Return ONLY a Python list of article IDs - no explanations, no other text
             6. Example output: [1, 2, 3, 4, 5]
             
@@ -127,11 +127,11 @@ class SelectorAgent(BaseAgent):
             """
 
         
-        elif context.control.attempt > 1:
+        elif context.execution.attempt > 1:
             message = f"""
             The editor agent has rejected {len(context.article_flow.rejected_articles_ids)} articles. 
             The following articles with ids: {context.article_flow.rejected_articles_ids} were rejected. 
-            You will select {context.control.target_articles} news articles.
+            You will select {context.config.target_articles} news articles.
         
             Instructions:
             1. Revisit the list of candidate articles and review the content of each article. 

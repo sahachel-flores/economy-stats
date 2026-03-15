@@ -47,15 +47,15 @@ class EditorAgent(BaseAgent):
                 context.agent_states.editor.history.append({'role': 'assistant', 'content': result})
 
                 # Handling the llm response where the number of approved articles is =, <, or > than the target articles
-                if len(context.article_flow.approved_articles_ids) == context.control.target_articles:
+                if len(context.article_flow.approved_articles_ids) == context.config.target_articles:
                     
                     context.agent_states.editor.last_response = result
                     context.agent_states.editor.history.append({'role': 'assistant', 'content': result})
                     context.article_flow.approved_articles_content = await get_articles_using_ids_from_db(context.article_flow.approved_articles_ids, db)
                     return True
-                elif len(context.article_flow.approved_articles_ids) > context.control.target_articles:
+                elif len(context.article_flow.approved_articles_ids) > context.config.target_articles:
                     logger.info(f"The selector agent aproved {len(context.article_flow.approved_articles_ids)}...... removing some ids")
-                    context.article_flow.approved_articles_ids = context.article_flow.approved_articles_content[:context.control.target_articles]
+                    context.article_flow.approved_articles_ids = context.article_flow.approved_articles_content[:context.config.target_articles]
                     return True
                 else:
                     self.logger.info(f"Editor agent - parsed result: {parsed_result}")
@@ -77,9 +77,9 @@ class EditorAgent(BaseAgent):
         """
         Generate the input message for the editor agent.
         """
-        if context.control.attempt == 1:
+        if context.execution.attempt == 1:
             instruction = f""" You are an experienced news editor. Your task is to review a list of objects which contains information about the 
-            news articles related to the topic: {context.control.topic}.
+            news articles related to the topic: {context.input.topic}.
             The structure of the objects is as follows:
 
             {{
@@ -107,10 +107,10 @@ class EditorAgent(BaseAgent):
             instruction = f""" 
             You approved the articles with id: {context.article_flow.approved_articles_ids}.
             The selector agent selected the articles with ids: {context.article_flow.selected_articles_ids}.
-            Using the previous instructions, review the list of articles and select the id of {context.control.target_articles - len(context.article_flow.approved_articles_ids)} article(s).
+            Using the previous instructions, review the list of articles and select the id of {context.config.target_articles - len(context.article_flow.approved_articles_ids)} article(s).
             from selected news articles.
 
-            Remember that the target number of selected articles' id is {context.control.target_articles}.
+            Remember that the target number of selected articles' id is {context.config.target_articles}.
             Do not approver more articles than this value.
 
             List news articles:\n
