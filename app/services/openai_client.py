@@ -9,7 +9,7 @@ MODEL = 'gpt-4o-mini'
 
 
 
-def ask_openai(messages: list, model: str = MODEL, temperature: float = 0.3) -> None:
+def ask_openai(messages: list, model: str = MODEL, temperature: float = 0.3) -> str:
     """
     Sends a prompt to OpenAI and returns the model's response as plain text.
     """

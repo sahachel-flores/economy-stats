@@ -1,8 +1,7 @@
 # app/models/agent_context_schema.py
-from PIL.ExifTags import Base
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
-from app.schemas.news import NewsArticleResponse
+from app.schemas.news import ArticleData
 
 
 class PipelineInput(BaseModel):
@@ -25,43 +24,35 @@ class ArticleFlow(BaseModel):
     """
     Articles at different stages of the pipeline
     """
-    raw_articles: List[NewsArticleResponse] = Field(default_factory=list, description="Original articles from News API")
-    articles_from_db: List[NewsArticleResponse] = Field(default_factory=list, description="Articles returned from the database")
+    raw_articles: List[ArticleData] = Field(default_factory=list, description="Original articles from News API")
+    articles_from_db: List[ArticleData] = Field(default_factory=list, description="Articles returned from the database")
     selected_articles_ids: List[int] = Field(default_factory=list, description="IDs selected by selector agent")
-    selected_articles_content: List[dict] = Field(default_factory=list, description="Full content of selected articles")
+    selected_articles_content: List[ArticleData] = Field(default_factory=list, description="Full content of selected articles")
     approved_articles_ids: List[int] = Field(default_factory=list, description="IDs approved by editor agent")
-    approved_articles_content: List[dict] = Field(default_factory=list, description="Full content of approved articles")
+    approved_articles_content: List[ArticleData] = Field(default_factory=list, description="Full content of approved articles")
     rejected_articles_ids: List[int] = Field(default_factory=list, description="IDs rejected by editor agent")
-    rejected_articles_content: List[dict] = Field(default_factory=list, description="Full content of rejected articles")
-    
+    rejected_articles_content: List[ArticleData] = Field(default_factory=list, description="Full content of rejected articles")
 
-class SelectorState(BaseModel):
-    history: List[dict] = Field(default_factory=list, description="OpenAI conversation history")
-    execution_count: int = Field(default=0, description="Number of times executed")
-    last_response: Optional[str] = Field(default=None, description="Last raw OpenAI response")
-    attempt: int = Field(default=0, description="Selector agent attempt")
-    max_attempts: int = Field(default=3, description="Maximum number of attempts to use selector agent")
-    feedback: str = Field(default=None, description="Feedback from user")
-
-class EditorState(BaseModel):
+class AgentState(BaseModel):
     history: List[dict] = Field(default_factory=list, description="OpenAI conversation history") 
     execution_count: int = Field(default=0, description="Number of times executed")
     last_response: Optional[str] = Field(default=None, description="Last raw OpenAI response")
     attempt: int = Field(default=0, description="Editor agent attempt")
     max_attempts: int = Field(default=3, description="Maximum number of attempts to use editor agent")
-    feedback: str = Field(default=None, description="Feedback from user")
+    feedback: Optional[str] = Field(default=None, description="Feedback from user")
 
 class SentimentAnalysisState(BaseModel):
     history: List[dict] = Field(default_factory=list, description="OpenAI conversation history")
     execution_count: int = Field(default=0, description="Number of times executed")
     last_response: Optional[str] = Field(default=None, description="Last raw OpenAI response")
 
-class AgentStates(BaseModel):
+class AgentsCommunication(BaseModel):
     """
     Internal state for each agent - don't cross-contaminate
     """
-    selector: SelectorState = Field(default_factory=lambda: SelectorState())
-    editor: EditorState = Field(default_factory=lambda: EditorState())
+    selector: AgentState = Field(default_factory=lambda: AgentState())
+    editor: AgentState = Field(default_factory=lambda: AgentState())
+    sentiment_analysis: AgentState = Field(default_factory=lambda: AgentState())
     history: List[dict] = Field(default_factory=list, description="OpenAI conversation history")
     # Future agents will add their state here
 
@@ -84,7 +75,7 @@ class AgentContext(BaseModel):
     config: PipelineConfig = Field(default_factory=PipelineConfig)
     execution: PipelineExecution = Field(default_factory=PipelineExecution)
     article_flow: ArticleFlow = Field(default_factory=ArticleFlow)
-    agent_states: AgentStates = Field(default_factory=AgentStates)
+    agent_communication: AgentsCommunication = Field(default_factory=AgentsCommunication)
     results: PipelineResults = Field(default_factory=PipelineResults)
 
     def should_continue(self) -> bool:

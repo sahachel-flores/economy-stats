@@ -21,8 +21,8 @@ class EditorAgent(BaseAgent):
         Agent for editing the articles.
         """
         try:
-            context.agent_states.editor.attempt = 1
-            while context.agent_states.editor.attempt <= context.agent_states.editor.max_attempts:
+            context.agent_communication.editor.attempt = 1
+            while context.agent_communication.editor.attempt <= context.agent_communication.editor.max_attempts:
                 self.logger.info(f"---------------->Executing editor agent... Attempt {context.agent_states.editor.attempt}")
                 # Generate input message
                 instruction = self.generate_input_message(context)
@@ -30,10 +30,10 @@ class EditorAgent(BaseAgent):
                     raise AgentExecutionError("Editor agent: Error generating input message")
                 message = {"role": "system", "content": instruction}
                 # appending messages to the editor history
-                context.agent_states.editor.history.append(message)
+                context.agent_communication.editor.history.append(message)
 
                 # LLM client call  
-                result = self.llm_client(context.agent_states.editor.history)
+                result = self.llm_client(context.agent_communication.editor.history)
                 if not result:
                     raise AgentExecutionError("Editor agent: Error ask_openai function failed to return a result")
                 
@@ -44,13 +44,13 @@ class EditorAgent(BaseAgent):
 
                 # adding appove articles and history
                 context.article_flow.approved_articles_ids.extend(parsed_result)
-                context.agent_states.editor.history.append({'role': 'assistant', 'content': result})
+                context.agent_communication.editor.history.append({'role': 'assistant', 'content': result})
 
                 # Handling the llm response where the number of approved articles is =, <, or > than the target articles
                 if len(context.article_flow.approved_articles_ids) == context.config.target_articles:
                     
-                    context.agent_states.editor.last_response = result
-                    context.agent_states.editor.history.append({'role': 'assistant', 'content': result})
+                    context.agent_communication.editor.last_response = result
+                    context.agent_communication.editor.history.append({'role': 'assistant', 'content': result})
                     context.article_flow.approved_articles_content = await get_articles_using_ids_from_db(context.article_flow.approved_articles_ids, db)
                     return True
                 elif len(context.article_flow.approved_articles_ids) > context.config.target_articles:
@@ -65,7 +65,7 @@ class EditorAgent(BaseAgent):
                             context.article_flow.rejected_articles_ids.append(a)
                     self.logger.info(f"Editor agent - rejected articles ids: {context.article_flow.rejected_articles_ids}")
                     return False
-                context.agent_states.editor.attempt += 1
+                context.agent_communication.editor.attempt += 1
 
         except Exception as e:
             logger.error(f"Fatal error occured with Editor agent: {e}")

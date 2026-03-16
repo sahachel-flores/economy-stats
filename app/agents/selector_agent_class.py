@@ -23,9 +23,9 @@ class SelectorAgent(BaseAgent):
         Agent for selecting the most relevant articles.
         """
         try:
-            context.agent_states.selector.attempt = 1
-            while context.agent_states.selector.attempt <= context.agent_states.selector.max_attempts:
-                if not context.agent_states.selector.feedback:
+            context.agent_communication.selector.attempt = 1
+            while context.agent_communication.selector.attempt <= context.agent_communication.selector.max_attempts:
+                if not context.agent_communication.selector.feedback:
                     self.logger.info(f"---------->Executing selector agent... Attempt {context.execution.attempt} target articles: {context.config.target_articles}")
                     # Generating the input message
                     prompt = self.generate_input_message(context)
@@ -38,14 +38,14 @@ class SelectorAgent(BaseAgent):
 
                     # Appending the input message to the history
                     system_message = {"role": "system", "content": prompt}
-                    context.agent_states.selector.history.append(system_message)
+                    context.agent_communication.selector.history.append(system_message)
                 else:
                     # we have feedback for our agent
-                    prompt = context.agent_states.selector.feedback
+                    prompt = context.agent_communication.selector.feedback
                     system_message = {"role": "system", "content": prompt}
-                    context.agent_states.selector.history.append(system_message)
+                    context.agent_communication.selector.history.append(system_message)
                 # Asking the openai model for the response
-                result = self.llm_client(context.agent_states.selector.history)
+                result = self.llm_client(context.agent_communication.selector.history)
                 self.logger.info(f"Selector agent: result: {result}")
                 if not result:
                     raise AgentExecutionError("Selector agent: Error ask_openai function failed to return a result")
@@ -56,8 +56,8 @@ class SelectorAgent(BaseAgent):
                     raise AgentExecutionError("Selector agent: Error parsing the response")
 
                 # Updating response and history to context
-                context.agent_states.selector.last_response = result
-                context.agent_states.selector.history.append({'role': 'assistant', 'content': result})
+                context.agent_communication.selector.last_response = result
+                context.agent_communication.selector.history.append({'role': 'assistant', 'content': result})
                 context.article_flow.selected_articles_ids = parsed_result
                 context.article_flow.selected_articles_content = await get_articles_using_ids_from_db(parsed_result, db)
                 if not context.article_flow.selected_articles_content:
@@ -66,8 +66,8 @@ class SelectorAgent(BaseAgent):
                 # Handling the llm response where the number of selected articles is =, <, or > than the target articles
                 if len(context.article_flow.selected_articles_ids) == context.config.target_articles :
                     # Cleaning the feedback if it exists
-                    if context.agent_states.selector.feedback:
-                        context.agent_states.selector.feedback = None
+                    if context.agent_communication.selector.feedback:
+                        context.agent_communication.selector.feedback = None
                     return True
                 elif len(context.article_flow.selected_articles_ids) < context.config.target_articles   :
                     self.logger.info(f"Selector agent: number of selected articles is less than the target articles")
