@@ -7,6 +7,7 @@ from app.services.logger import api_logger as logger
 from sqlalchemy import select, delete
 from datetime import datetime
 from app.services.news_api_tools import get_news_articles_from_news_api
+from app.schemas.pipeline_results import PipelineRun
 
 
 async def add_articles_to_db(articles: list[dict], db: AsyncSession) -> None:
@@ -168,3 +169,18 @@ def serialize_articles(articles):
         }
         for a in articles
 ]
+
+
+def add_pipeline_result_to_db(db: AsyncSession, context: AgentContext) -> None:
+    pipeline_results = PipelineRun(
+        topic = context.input.topic,
+        from_date=context.input.from_date,
+        to_date=context.input.to_date,
+        status=context.execution.status,
+        articles_processed=len(context.article_flow.articles_from_db),
+        approved_count=len(context.article_flow.approved_articles_ids),
+        approved_article_ids=context.article_flow.approved_articles_ids,
+    )
+
+    
+

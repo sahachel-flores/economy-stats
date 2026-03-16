@@ -12,7 +12,7 @@ from datetime import date
 from app.schemas.news import NewsRequest
 from app.services.db_tools import get_all_articles_from_db, ingest_api_news_to_db
 from app.services.logger import agent_logger as logger
-from app.services.db_tools import serialize_articles
+from app.services.db_tools import serialize_articles, add_pipeline_result_to_db
 router = APIRouter(
     prefix='/homepage',
     tags=['homepage']
@@ -51,6 +51,8 @@ async def homepage(
         db=db, 
         articles= articles
         )
+
+    await add_pipeline_result_to_db(db, context.context)
     
     
     #print(context.context.article_flow.approved_articles_ids)

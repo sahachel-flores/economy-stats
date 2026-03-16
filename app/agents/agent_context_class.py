@@ -19,13 +19,14 @@ class PipelineConfig(BaseModel):
 class PipelineExecution(BaseModel):
     attempt: int = Field(default=1, description="Current pipeline attempt")
     num_articles_from_news_api: int = Field(default=0, description="Number of articles obtained from News API") #not used
+    status: str = Field(default="inactive", description="Descrives the phase at which the pipeline is currently at") #Todo: Create a class with enumerated status 
 
 class ArticleFlow(BaseModel):
     """
     Articles at different stages of the pipeline
     """
     raw_articles: List[NewsArticleResponse] = Field(default_factory=list, description="Original articles from News API")
-    articles_from_db: List[NewsArticleResponse] = Field(default_factory=list, description="Articles from the database")
+    articles_from_db: List[NewsArticleResponse] = Field(default_factory=list, description="Articles returned from the database")
     selected_articles_ids: List[int] = Field(default_factory=list, description="IDs selected by selector agent")
     selected_articles_content: List[dict] = Field(default_factory=list, description="Full content of selected articles")
     approved_articles_ids: List[int] = Field(default_factory=list, description="IDs approved by editor agent")

@@ -15,4 +15,3 @@ class NewsArticles(Base):
     content: Mapped[str] = mapped_column(Text)
 
     __table_args__ = (UniqueConstraint("url", name="uq_news_url"),)
-
