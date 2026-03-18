@@ -5,3 +5,8 @@ class SelectedArticleIds(BaseModel):
 
 class ApprovedArticleIds(BaseModel):
     article_ids: list[int]
+
+class SentimentAnalysisResult(BaseModel):
+    id: int
+    rating: int
+    sentiment: str

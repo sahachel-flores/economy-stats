@@ -108,7 +108,7 @@ async def get_articles_using_ids_from_db(
         result = await db.execute(stmt)
         articles = result.scalars().all()
 
-        logger.info(f"Get articles using ids from db: {articles}")
+        # logger.info(f"Get articles using ids from db: {articles}")
         return_articles = [
             ArticleData(
             id=a.id,

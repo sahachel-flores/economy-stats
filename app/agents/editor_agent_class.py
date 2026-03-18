@@ -50,7 +50,6 @@ class EditorAgent(BaseAgent):
                 if len(context.article_flow.approved_articles_ids) == context.config.target_articles:
                     
                     context.agent_communication.editor.last_response = result
-                    context.agent_communication.editor.history.append({'role': 'assistant', 'content': result})
                     context.article_flow.approved_articles_content = await get_articles_using_ids_from_db(context.article_flow.approved_articles_ids, db)
                     return True
                 elif len(context.article_flow.approved_articles_ids) > context.config.target_articles:

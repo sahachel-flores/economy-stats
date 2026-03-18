@@ -2,7 +2,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from app.schemas.news import ArticleData
-
+from app.schemas.agents import SentimentAnalysisResult
 
 class PipelineInput(BaseModel):
     topic: str = Field(default="US Economy", description="News topic to focus on")
@@ -31,7 +31,7 @@ class ArticleFlow(BaseModel):
     approved_articles_ids: List[int] = Field(default_factory=list, description="IDs approved by editor agent")
     approved_articles_content: List[ArticleData] = Field(default_factory=list, description="Full content of approved articles")
     rejected_articles_ids: List[int] = Field(default_factory=list, description="IDs rejected by editor agent")
-    rejected_articles_content: List[ArticleData] = Field(default_factory=list, description="Full content of rejected articles")
+    sentiment_analysis_results: List[SentimentAnalysisResult] = Field(default_factory=list, description="Sentiment analysis results")
 
 class AgentState(BaseModel):
     history: List[dict] = Field(default_factory=list, description="OpenAI conversation history") 

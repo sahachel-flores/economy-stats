@@ -17,10 +17,12 @@ class SentimentAnalysisAgent(BaseAgent):
         try:
             instruction = self.generate_input_message(context)
             message = {"role": "system", "content": instruction}
+            logger.info(f"Sentiment analysis agent: message: {message}")
             context.agent_communication.sentiment_analysis.history.append(message)
             result = ask_openai(context.agent_communication.sentiment_analysis.history)
-            parsed_result = self.parse_response(result, context)
-            return parsed_result
+            print(f"Sentiment analysis agent: result: {result}")
+            #parsed_result = self.parse_response(result, context)
+            #return parsed_result
         except Exception as e:
             logger.error(f"Error in sentiment analysis agent: {e}")
             return False

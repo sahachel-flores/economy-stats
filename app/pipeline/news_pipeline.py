@@ -8,7 +8,7 @@ from app.services.db_tools import remove_all_articles_from_db, add_articles_to_d
 from app.services.db_tools import db_has_items
 from app.exceptions.pipeline_exceptions import FetchError, AgentExecutionError
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.news import ArticleData
+from app.agents.sentiment_analysis_agent import SentimentAnalysisAgent
 
 async def fetch_articles(context: AgentContext, db: AsyncSession) -> None:
     """
@@ -54,6 +54,7 @@ async def run_news_pipeline(context: AgentContext, db: AsyncSession) -> None:
     # initializing the agents
     selector_agent = SelectorAgent(name="Selector Agent")
     editor_agent = EditorAgent(name="Editor Agent")
+    sentiment_analysis_agent = SentimentAnalysisAgent(name="Sentiment Analysis Agent")
 
     #logger.info(f"Articles to analyze: {context.article_flow.articles_from_db}")
 
@@ -66,7 +67,8 @@ async def run_news_pipeline(context: AgentContext, db: AsyncSession) -> None:
                 raise Exception("Selector agent failed to execute")
             if not await editor_agent.execute(context, db):
                 context.execution.attempt += 1
-
+        if not sentiment_analysis_agent.execute(context):
+            raise Exception("Sentiment analysis agent failed to execute")
 
     except Exception as e:
         raise Exception(f"Fatal error in the news pipeline: {e}")
