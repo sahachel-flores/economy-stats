@@ -43,13 +43,13 @@ async def homepage(
         )
     
     # Getting articles from db
-    articles = await get_all_articles_from_db(db, context.context.input.from_date)
-    context.context.article_flow.articles_from_db = serialize_articles(articles)
+    #articles = await get_all_articles_from_db(db, context.context.input.from_date)
+    #logger.info(f"Number of articles from db: {len(articles)}")
+    #context.context.article_flow.articles_from_db = serialize_articles(articles)
 
     await run_news_pipeline(
         context=context.context, 
         db=db, 
-        articles= articles
         )
 
     await add_pipeline_result_to_db(db, context.context)

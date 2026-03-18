@@ -30,8 +30,7 @@ class SelectorAgent(BaseAgent):
                     # Generating the input message
                     prompt = self.generate_input_message(context)
                     
-                    # uncomment if you want to see prompt 
-                    # self.logger.info(f"Selector agent: prompt: {prompt}")
+                    #self.logger.info(f"Selector agent: prompt: {prompt}")
                     
                     if not prompt:
                         raise AgentExecutionError("Selector agent: Error generating input message")
@@ -71,15 +70,15 @@ class SelectorAgent(BaseAgent):
                     return True
                 elif len(context.article_flow.selected_articles_ids) < context.config.target_articles   :
                     self.logger.info(f"Selector agent: number of selected articles is less than the target articles")
-                    context.agent_states.selector.feedback = "the number of selected articles is less than the target articles, read instructions again and retry again."
+                    context.agent_communication.selector.feedback = "the number of selected articles is less than the target articles, read instructions again and retry again."
                     #return False
                 else:
                     self.logger.info(f"Selector agent: number of selected articles is greater than the target articles")
 
-                    context.agent_states.selector.feedback = "the number of selected articles is greater than the target articles, read instructions again and retry again."
+                    context.agent_communication.selector.feedback = "the number of selected articles is greater than the target articles, read instructions again and retry again."
                     #return False
 
-                context.agent_states.selector.attempt += 1
+                context.agent_communication.selector.attempt += 1
 
         except Exception as e:
             self.logger.error(f"Selector agent failed to execute: {e}")
@@ -92,7 +91,7 @@ class SelectorAgent(BaseAgent):
         Generate the input message for the selector agent.
         """
         message = ""
-        if context.execution.attempt == 1 and context.agent_states.selector.attempt == 1:
+        if context.execution.attempt == 1 and context.agent_communication.selector.attempt == 1:
             message = f"""
             You are an expert news analyst. Select the {context.config.target_articles} most relevant articles about {context.input.topic}.
             You will be given a list of objects which contains information about the news articles in the following structure:
@@ -121,9 +120,12 @@ class SelectorAgent(BaseAgent):
             List of news articles:\n
             {context.article_flow.articles_from_db}
             """
-        elif context.agent_states.selector.attempt > 1 and context.agent_states.selector.feedback:
+
+            # logger.info(f"List of news articles: {context.article_flow.articles_from_db}")
+
+        elif context.agent_communication.selector.attempt > 1 and context.agent_communication.selector.feedback:
             message = f"""
-            Your last response is not correct because {context.agent_states.selector.feedback}.
+            Your last response is not correct because {context.agent_communication.selector.feedback}.
             """
 
         

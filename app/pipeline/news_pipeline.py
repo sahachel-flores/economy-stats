@@ -6,11 +6,11 @@ from app.agents.selector_agent_class import SelectorAgent
 from app.agents.editor_agent_class import EditorAgent
 from app.services.db_tools import remove_all_articles_from_db, add_articles_to_db, get_all_articles_from_db
 from app.services.db_tools import db_has_items
-from app.exceptions.pipeline_exceptions import FetchError, AgentExecutionError, PipelineError
+from app.exceptions.pipeline_exceptions import FetchError, AgentExecutionError
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.news_articles import NewsArticles
+from app.schemas.news import ArticleData
 
-async def fetch_articles(context, db):
+async def fetch_articles(context: AgentContext, db: AsyncSession) -> None:
     """
     Fetches articles from the database
     """
@@ -27,24 +27,22 @@ async def fetch_articles(context, db):
             to_date=context.control.to_date, 
             context=context)
 
-        if not raw_articles:
+        if len(raw_articles) == 0:
             raise FetchError("No articles returned from the news api")
-        context.article_flow.raw_articles.append(raw_articles)
+        context.article_flow.raw_articles = raw_articles
         logger.info(f"Number of raw articles: {len(raw_articles)}")
         # adding the articles to the database
         await add_articles_to_db(raw_articles, db)
         articles_from_db = await get_all_articles_from_db(db, from_date=context.control.from_date)
-        if not articles_from_db:
+        if len(articles_from_db) == 0:
             raise FetchError("Database returned no articles after insertion")
-                  
-        # adding the articles to the context
-        context.article_flow.articles_from_db.append(articles_from_db)
-        logger.info(f"Number of articles in the database: {len(context.article_flow.articles_from_db)}\n\n")
+        context.article_flow.articles_from_db = articles_from_db
+        logger.info(f"Number of articles in the database: {len(context.article_flow.articles_from_db)}")
     except Exception as e:
         raise FetchError(f"Failed fetching articles: {e}") from e
 
 
-async def run_news_pipeline(context: AgentContext, db: AsyncSession, articles: list[NewsArticles]) -> None:
+async def run_news_pipeline(context: AgentContext, db: AsyncSession) -> None:
     """
     Orchestrates the full news analysis pipeline:
     - Scrapes articles
@@ -57,7 +55,7 @@ async def run_news_pipeline(context: AgentContext, db: AsyncSession, articles: l
     selector_agent = SelectorAgent(name="Selector Agent")
     editor_agent = EditorAgent(name="Editor Agent")
 
-    
+    #logger.info(f"Articles to analyze: {context.article_flow.articles_from_db}")
 
     # running the pipeline
     try:

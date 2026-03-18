@@ -23,7 +23,7 @@ class EditorAgent(BaseAgent):
         try:
             context.agent_communication.editor.attempt = 1
             while context.agent_communication.editor.attempt <= context.agent_communication.editor.max_attempts:
-                self.logger.info(f"---------------->Executing editor agent... Attempt {context.agent_states.editor.attempt}")
+                self.logger.info(f"---------------->Executing editor agent... Attempt {context.agent_communication.editor.attempt}")
                 # Generate input message
                 instruction = self.generate_input_message(context)
                 if not instruction:

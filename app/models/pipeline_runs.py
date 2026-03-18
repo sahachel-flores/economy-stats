@@ -12,9 +12,9 @@ class PipelinesRuns(Base):
     to_date: Mapped[str] = mapped_column(String(50))
     status: Mapped[str] = mapped_column(String(50))
     articles_processed: Mapped[int] = mapped_column(Integer)
-    approved_article_count: Mapped[int] = mapped_column(Integer, nullable=True)
+    approved_count: Mapped[int] = mapped_column(Integer)
     approved_article_ids: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now) # Todo: change to utc
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)  # Todo: change to utc
     #summary = mapped_column(Text)
     #execution_time = mapped_column(Float)
 

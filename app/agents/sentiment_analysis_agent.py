@@ -17,8 +17,8 @@ class SentimentAnalysisAgent(BaseAgent):
         try:
             instruction = self.generate_input_message(context)
             message = {"role": "system", "content": instruction}
-            context.agent_states.sentiment_analysis.history.append(message)
-            result = ask_openai(context.agent_states.sentiment_analysis.history)
+            context.agent_communication.sentiment_analysis.history.append(message)
+            result = ask_openai(context.agent_communication.sentiment_analysis.history)
             parsed_result = self.parse_response(result, context)
             return parsed_result
         except Exception as e:
