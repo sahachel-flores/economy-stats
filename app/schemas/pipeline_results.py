@@ -1,16 +1,20 @@
-from datetime import datetime
+"""
+Pydantic schemas for pipeline run data.
+
+Use these for API request/response and validation only.
+Do not use for database persistence — use app.models.pipeline_runs.PipelinesRuns instead.
+"""
 
 from pydantic import BaseModel
-from sqlalchemy import Integer, String, DateTime, Text
-from sqlalchemy.orm import Mapped, mapped_column
 
-class PipelineRun(BaseModel):
+
+class PipelineRunSchema(BaseModel):
     """
-    SQLAlchemy ORM model for storing news pipeline run metadata.
+    DTO for a single pipeline run. Use for API responses and validation.
+    For DB persistence use app.models.pipeline_runs.PipelinesRuns.
     """
 
-    __tablename__ = "pipeline_runs"
-
+    id: int | None = None
     topic: str
     from_date: str
     to_date: str
@@ -18,3 +22,5 @@ class PipelineRun(BaseModel):
     articles_processed: int
     approved_count: int
     approved_article_ids: list[int]
+
+    model_config = {"from_attributes": True}
