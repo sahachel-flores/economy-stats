@@ -2,6 +2,13 @@ from app.agents.base_agent import BaseAgent
 from app.agents.agent_context_class import AgentContext
 from app.services.openai_client import ask_openai
 from app.services.logger import agent_logger as logger
+from app.services.db_tools import get_articles_using_ids_from_db
+from app.schemas.agents import SentimentAnalysisResult
+
+import ast
+import json
+import re
+from typing import Any
 
 class SentimentAnalysisAgent(BaseAgent):
     """
@@ -9,23 +16,73 @@ class SentimentAnalysisAgent(BaseAgent):
     """
     def __init__(self, name: str = "Sentiment Analysis Agent", max_retries: int = 2):
         super().__init__(name, max_retries)
+        self.llm_client = ask_openai
+        self.article_fetcher = get_articles_using_ids_from_db
+        self.logger = logger
     
-    def execute(self, context: AgentContext, *args, **kwargs) -> bool:
+    @staticmethod
+    def _extract_bracket_payload(text: str) -> str:
+        """
+        Extract the first top-level JSON/Python list payload from LLM output.
+        Handles common patterns like fenced code blocks (```python ... ```).
+        """
+        if not text:
+            raise ValueError("Empty LLM response")
+
+        # Prefer fenced blocks if present
+        fenced = re.search(r"```(?:\w+)?\s*([\s\S]*?)\s*```", text)
+        candidate = fenced.group(1) if fenced else text
+
+        start = candidate.find("[")
+        end = candidate.rfind("]")
+        if start == -1 or end == -1 or end <= start:
+            raise ValueError("No bracketed list payload found in LLM response")
+
+        return candidate[start : end + 1].strip()
+
+    @classmethod
+    def parse_sentiment_analysis_response(cls, text: str) -> list[SentimentAnalysisResult]:
+        payload = cls._extract_bracket_payload(text)
+
+        data: Any
+        try:
+            data = json.loads(payload)
+        except json.JSONDecodeError:
+            # Fallback for python-ish lists (single quotes, trailing commas, etc.)
+            data = ast.literal_eval(payload)
+
+        if not isinstance(data, list):
+            raise ValueError(f"Expected a list, got {type(data).__name__}")
+
+        results: list[SentimentAnalysisResult] = []
+        for item in data:
+            if not isinstance(item, dict):
+                raise ValueError(f"Expected dict items, got {type(item).__name__}")
+            results.append(SentimentAnalysisResult(**item))
+        return results
+
+    def execute(self, context: AgentContext, *args, **kwargs) -> None:
         """
         Agent for analyzing the sentiment of the articles.
         """
         try:
+            logger.info(f"---------------->Executing sentiment analysis agent...")
             instruction = self.generate_input_message(context)
             message = {"role": "system", "content": instruction}
-            logger.info(f"Sentiment analysis agent: message: {message}")
             context.agent_communication.sentiment_analysis.history.append(message)
-            result = ask_openai(context.agent_communication.sentiment_analysis.history)
-            print(f"Sentiment analysis agent: result: {result}")
-            #parsed_result = self.parse_response(result, context)
-            #return parsed_result
+            result = self.llm_client(context.agent_communication.sentiment_analysis.history)
+            if not result:
+                raise Exception("Sentiment analysis agent: Error ask_openai function failed to return a result")
+            context.agent_communication.sentiment_analysis.history.append({'role': 'assistant', 'content': result}) 
+            context.agent_communication.sentiment_analysis.last_response = result
+
+            parsed = self.parse_sentiment_analysis_response(result)
+            logger.info(f"Sentiment analysis agent: parsed: {parsed}")
+            context.article_flow.sentiment_analysis_results = parsed
+ 
         except Exception as e:
             logger.error(f"Error in sentiment analysis agent: {e}")
-            return False
+            return None
     
     def generate_input_message(self, context: AgentContext, *args, **kwargs) -> str:
         """

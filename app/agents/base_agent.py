@@ -15,8 +15,9 @@ class BaseAgent(ABC):
         Execure the agent's logic and return a boolean indicating if the execution was successful.
         """
         pass
-
-    def parse_response(self, response: str, context: AgentContext, *args, **kwargs) -> list[int]:
+    
+    @staticmethod
+    def parse_response(response: str, context: AgentContext, *args, **kwargs) -> list[int]:
         """ 
         Parse the response from the selector agent and return a boolean indicating if the response is valid.
         """

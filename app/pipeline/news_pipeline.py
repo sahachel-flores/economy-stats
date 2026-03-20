@@ -67,8 +67,7 @@ async def run_news_pipeline(context: AgentContext, db: AsyncSession) -> None:
                 raise Exception("Selector agent failed to execute")
             if not await editor_agent.execute(context, db):
                 context.execution.attempt += 1
-        if not sentiment_analysis_agent.execute(context):
-            raise Exception("Sentiment analysis agent failed to execute")
+        sentiment_analysis_agent.execute(context)
 
     except Exception as e:
         raise Exception(f"Fatal error in the news pipeline: {e}")
